@@ -381,16 +381,6 @@
         }
       }
     },
-    "Asks ESP32 Agent to do a task on this iPhone, like \"Open Settings and go to Wi-Fi\"." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "让 ESP32 Agent 在这台 iPhone 上完成一个任务，比如“打开设置并进入无线局域网”。"
-          }
-        }
-      }
-    },
     "AssistiveTouch" : {
       "localizations" : {
         "zh-Hans" : {
@@ -5604,6 +5594,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "包含 debug.log、iOS 崩溃报告和每次运行（步骤、模型回复、截图、视频）的压缩包。不会包含你的 API 密钥。"
+          }
+        }
+      }
+    },
+    "Asks ESP32 Agent to do a task on this phone, like \"Open Settings and go to Wi-Fi\"." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "让 ESP32 Agent 在这台手机上完成一个任务，比如“打开设置并进入无线局域网”。"
           }
         }
       }

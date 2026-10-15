@@ -5,7 +5,7 @@ import SwiftUI
 /// background (the run itself happens on the Home Screen) and may start the Live Activity.
 struct RunTaskIntent: LiveActivityIntent {
     static let title: LocalizedStringResource = "Run a Task"
-    static let description = IntentDescription("Asks ESP32 Agent to do a task on this iPhone, like \"Open Settings and go to Wi-Fi\".")
+    static let description = IntentDescription("Asks ESP32 Agent to do a task on this phone, like \"Open Settings and go to Wi-Fi\".")
 
     @Parameter(title: "Task", requestValueDialog: "What should I do?") var task: String
 

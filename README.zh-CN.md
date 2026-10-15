@@ -112,6 +112,7 @@ server/     旧版 v0.1.0 的电脑端服务，新版不使用（见 server/READ
 - [ ] 横屏 App（坐标和校准目前按竖屏）
 - [ ] 非 ASCII 输入（比如用 iOS 拼音键盘输入中文）
 - [ ] 更快：一次模型调用多个动作，只在需要时校正指针
+- [ ] 在 iOS App 内整理一份效果最好的模型推荐列表（[@asharthinks 的建议](https://x.com/asharthinks/status/2110740775030125019)）
 
 ## 限制
 

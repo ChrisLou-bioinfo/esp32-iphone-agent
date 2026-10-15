@@ -128,6 +128,7 @@ Debugging without the phone app: `hardware/tools/board_test.py` plays the app ov
 - [ ] Landscape apps (coordinates and calibration assume portrait)
 - [ ] Non-ASCII text input (e.g. Chinese through the iOS pinyin keyboard)
 - [ ] Faster steps: several actions per model call, pointer checks only when needed
+- [ ] A curated list of models that work best with this setup, shown inside the iOS app ([suggested by @asharthinks](https://x.com/asharthinks/status/2110740775030125019))
 
 ## Limitations
 

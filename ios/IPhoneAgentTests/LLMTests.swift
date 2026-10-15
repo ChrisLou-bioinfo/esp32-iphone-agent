@@ -36,6 +36,40 @@ final class StubProtocol: URLProtocol {
 
 /// Port of server/tests/test_llm.py, plus streaming.
 @MainActor final class LLMTests: XCTestCase {
+    func testProviderInferenceAndCustomEndpoints() {
+        XCTAssertEqual(ModelProvider.infer(baseURL: "https://openrouter.ai/api/v1/", model: "openrouter/free"), .openRouterFree)
+        XCTAssertEqual(ModelProvider.infer(baseURL: "https://api.openai.com/v1", model: "custom"), .openAI)
+        XCTAssertEqual(ModelProvider.infer(baseURL: "http://192.168.1.4:8080/v1", model: "local"), .others)
+        XCTAssertNotEqual(ModelProvider.qwen.baseURL, ModelProvider.qwenInternational.baseURL)
+    }
+
+    func testProviderSwitchResetsModelOverridesAndOthersKeepsEditableConfig() async throws {
+        let name = "provider-test-" + UUID().uuidString
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        let settings = Settings(defaults: defaults, info: [:])
+        settings.selectProvider(.openRouterFree)
+        XCTAssertEqual(settings.baseURL, "https://openrouter.ai/api/v1")
+        let model = try await settings.resolvedModel()
+        XCTAssertEqual(model, "openrouter/free")
+        settings.plannerModel = "old-planner"
+        settings.actorModel = "old-actor"
+        settings.selectProvider(.openAI)
+        XCTAssertEqual(settings.model, "")
+        XCTAssertEqual(settings.actorModel, "")
+        XCTAssertEqual(settings.plannerModel, "")
+        do { _ = try await settings.resolvedModel(); XCTFail("Must explicitly choose a model") } catch {}
+        settings.selectProvider(.others)
+        settings.baseURL = "http://192.168.1.4:8080/v1"
+        settings.model = "my-custom-vision-model"
+        XCTAssertTrue(settings.isConfigured)
+        let custom = try await settings.resolvedModel()
+        XCTAssertEqual(custom, "my-custom-vision-model")
+        XCTAssertEqual(settings.provider, .others)
+        settings.baseURL = "httpjunk://endpoint"
+        XCTAssertFalse(settings.isConfigured)
+    }
+
     func client(_ model: String, extra: [String: Any] = [:], tokenParam: String = "auto") -> LLMClient {
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [StubProtocol.self]

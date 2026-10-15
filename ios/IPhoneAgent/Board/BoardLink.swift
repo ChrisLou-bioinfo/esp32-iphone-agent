@@ -14,12 +14,14 @@ import Foundation
     @Published private(set) var found: [Found] = []
     @Published private(set) var scanning = false
     @Published private(set) var connected = false  // subscribed and ready for commands
+    @Published private(set) var connecting = false
     @Published private(set) var linking = false    // connected over the air, pairing / subscribing
     @Published private(set) var pairedID: UUID?
     @Published private(set) var name = ""
     @Published private(set) var status: BoardStatus?
     @Published private(set) var net: NetConfig?
     @Published private(set) var lastError = ""
+    @Published private(set) var signalStrength: Int?
 
     let commands = CommandChannel()
     var onVideo: ((Data) -> Void)?
@@ -37,6 +39,10 @@ import Foundation
     private var netWaiters: [CheckedContinuation<NetConfig, Error>] = []
     private static let pairedKey = "pairedBoard"
     private var statusReads: Task<Void, Never>?
+    private var scanDeadline: Task<Void, Never>?
+    private var connectionDeadline: Task<Void, Never>?
+    private var retryTask: Task<Void, Never>?
+    private var candidates: [UUID: CBPeripheral] = [:]
     let mock: Bool  // demo data: no Bluetooth, every command answers ok (MockMode)
 
     init(mock: Bool = false) {
@@ -57,13 +63,28 @@ import Foundation
     // MARK: - scan / pair
 
     func scan() {
-        guard state == .poweredOn, !mock else { return }
+        guard state == .poweredOn, !mock, !connected, !connecting, !linking else { return }
         found = []
+        lastError = ""
         scanning = true
         central.scanForPeripherals(withServices: [BoardUUID.service], options: nil)
+        log("BLE scanning for board service")
+        scanDeadline?.cancel()
+        scanDeadline = Task { [weak self] in
+            guard (try? await Task.sleep(nanoseconds: 12_000_000_000)) != nil, let self, self.scanning else { return }
+            self.stopScan()
+            if self.found.isEmpty {
+                self.lastError = String(localized: "No board found. Check its power, keep it nearby, and scan again.")
+            }
+        }
+        // A board already connected by another app may no longer advertise.
+        for p in central.retrieveConnectedPeripherals(withServices: [BoardUUID.service]) {
+            discovered(p, name: p.name ?? "ESP32 Agent", rssi: 0)
+        }
     }
 
     func stopScan() {
+        scanDeadline?.cancel()
         central?.stopScan()
         scanning = false
     }
@@ -73,7 +94,13 @@ import Foundation
         if mock { return mockPair(id) }
         stopScan()
         pairedID = id
-        UserDefaults.standard.set(id.uuidString, forKey: Self.pairedKey)
+        lastError = ""
+        if let previous = peripheral, previous.identifier != id {
+            peripheral = nil
+            central.cancelPeripheralConnection(previous)
+            setDisconnected()
+        }
+        peripheral = candidates[id]
         reconnect()
     }
 
@@ -86,15 +113,49 @@ import Foundation
 
     /// Forget the board in the app only.
     func forget() {
-        if let peripheral { central?.cancelPeripheralConnection(peripheral) }
+        retryTask?.cancel()
+        connectionDeadline?.cancel()
+        let previous = peripheral
         peripheral = nil
+        if let previous { central?.cancelPeripheralConnection(previous) }
         pairedID = nil
+        signalStrength = nil
         UserDefaults.standard.removeObject(forKey: Self.pairedKey)
         setDisconnected()
     }
 
+    func retryDiscovery() {
+        forget()
+        lastError = ""
+        scan()
+    }
+
+    private func discovered(_ p: CBPeripheral, name: String, rssi: Int) {
+        candidates[p.identifier] = p
+        if rssi < 0 { signalStrength = rssi }
+        let item = Found(id: p.identifier, name: name, rssi: rssi)
+        if let i = found.firstIndex(where: { $0.id == item.id }) { found[i] = item } else { found.append(item) }
+        log("BLE found \(name), RSSI \(rssi)")
+        if p.identifier == pairedID && !connected && !linking && !connecting {
+            stopScan()
+            peripheral = p
+            reconnect()
+        }
+    }
+
+    private func failConnection(_ message: String) {
+        retryTask?.cancel()
+        lastError = message
+        log("BLE setup failed: \(message)")
+        let previous = peripheral
+        peripheral = nil
+        setDisconnected()
+        stopScan()
+        if let previous { central.cancelPeripheralConnection(previous) }
+    }
+
     private func reconnect() {
-        guard state == .poweredOn, !mock, let id = pairedID else { return }
+        guard state == .poweredOn, !mock, !connected, !connecting, !linking, let id = pairedID else { return }
         if peripheral?.identifier != id {
             peripheral = central.retrievePeripherals(withIdentifiers: [id]).first
         }
@@ -105,13 +166,25 @@ import Foundation
         }
         peripheral.delegate = self
         name = peripheral.name ?? name
-        central.connect(peripheral, options: nil)  // no timeout: completes whenever the board shows up
+        connecting = true
+        log("BLE connecting to \(name)")
+        connectionDeadline?.cancel()
+        connectionDeadline = Task { [weak self] in
+            guard (try? await Task.sleep(nanoseconds: 30_000_000_000)) != nil, let self, !self.connected else { return }
+            self.failConnection(String(localized: "Connection timed out. Keep the board nearby and try again."))
+        }
+        if peripheral.state == .connected {
+            connecting = false
+            linking = true
+            peripheral.discoverServices([BoardUUID.service])
+        } else { central.connect(peripheral, options: nil) }
     }
 
     // MARK: - net
 
     /// Read the network config (the first read pairs the phone with the board).
     func readNet() async throws -> NetConfig {
+        if connected, let net { return net }
         guard let peripheral, let c = chars[BoardUUID.net] else { throw DeviceError(message: "board not connected") }
         return try await withCheckedThrowingContinuation { cont in
             netWaiters.append(cont)
@@ -207,7 +280,7 @@ import Foundation
             var tick = 0, lastTick = now()
             while !Task.isCancelled {
                 guard let self, self.connected, let p = self.peripheral, let c = self.chars[BoardUUID.status] else { return }
-                if tick % 5 == 0 { p.readValue(for: c) }
+                if tick % 5 == 0 { p.readValue(for: c); p.readRSSI() }
                 if now() - lastTick < 2 && now() - self.lastNotify > 5 {
                     DebugLog.write(String(format: "BLE: no notification for %.0f s; dropping the link", now() - self.lastNotify))
                     return self.dropLink()
@@ -221,6 +294,9 @@ import Foundation
 
     private func setDisconnected() {
         statusReads?.cancel()
+        connectionDeadline?.cancel()
+        connecting = false
+        net = nil
         let was = connected
         connected = false
         linking = false
@@ -240,7 +316,8 @@ extension BoardLink: CBCentralManagerDelegate {
     nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {
         MainActor.assumeIsolated {
             state = central.state
-            if central.state == .poweredOn { reconnect() } else { setDisconnected() }
+            log("BLE state \(central.state.rawValue)")
+            if central.state == .poweredOn { reconnect() } else { stopScan(); setDisconnected() }
         }
     }
 
@@ -258,18 +335,14 @@ extension BoardLink: CBCentralManagerDelegate {
                                     advertisementData: [String: Any], rssi: NSNumber) {
         MainActor.assumeIsolated {
             let name = advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? p.name ?? "ESP32 Agent"
-            let item = Found(id: p.identifier, name: name, rssi: rssi.intValue)
-            if let i = found.firstIndex(where: { $0.id == item.id }) { found[i] = item } else { found.append(item) }
-            if p.identifier == pairedID && !connected && !linking {  // the paired board is back: connect at once
-                stopScan()
-                peripheral = p
-                reconnect()
-            }
+            discovered(p, name: name, rssi: rssi.intValue)
         }
     }
 
     nonisolated func centralManager(_ central: CBCentralManager, didConnect p: CBPeripheral) {
         MainActor.assumeIsolated {
+            guard p === peripheral else { return }
+            connecting = false
             name = p.name ?? name
             linking = true
             log("board connected, discovering")
@@ -279,32 +352,48 @@ extension BoardLink: CBCentralManagerDelegate {
 
     nonisolated func centralManager(_ central: CBCentralManager, didFailToConnect p: CBPeripheral, error: Error?) {
         MainActor.assumeIsolated {
+            guard p === peripheral else { return }
             lastError = error?.localizedDescription ?? "connect failed"
             let e = error as NSError?
             DebugLog.write("BLE connect failed: \(e?.domain ?? "-") \(e?.code ?? 0): \(lastError)")
-            reconnect()
+            failConnection(lastError)
         }
     }
 
     nonisolated func centralManager(_ central: CBCentralManager, didDisconnectPeripheral p: CBPeripheral,
                                     error: Error?) {
         MainActor.assumeIsolated {
+            guard p === peripheral else { return }
             let e = error as NSError?
             DebugLog.write(String(format: "BLE disconnect: %@ %d: %@; last notification %.1f s ago; link up %.0f s",
                                   e?.domain ?? "no error", e?.code ?? 0, e?.localizedDescription ?? "-",
                                   lastNotify > 0 ? now() - lastNotify : -1, readySince > 0 ? now() - readySince : -1))
             setDisconnected()
             if let error { lastError = error.localizedDescription }
-            reconnect()  // pending connect: iOS completes it when the board is back, even in background
+            retryTask?.cancel()
+            retryTask = Task { [weak self] in
+                guard (try? await Task.sleep(nanoseconds: 2_000_000_000)) != nil else { return }
+                self?.reconnect()
+            }
         }
     }
 }
 
 extension BoardLink: CBPeripheralDelegate {
+    nonisolated func peripheral(_ p: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
+        MainActor.assumeIsolated {
+            guard p === peripheral, error == nil else { return }
+            signalStrength = RSSI.intValue
+            log("BLE signal \(RSSI.intValue) dBm")
+        }
+    }
+
     nonisolated func peripheral(_ p: CBPeripheral, didDiscoverServices error: Error?) {
         MainActor.assumeIsolated {
+            guard p === peripheral else { return }
+            if let error { failConnection(error.localizedDescription); return }
             guard let service = p.services?.first(where: { $0.uuid == BoardUUID.service }) else {
-                lastError = "board service missing"
+                failConnection(String(localized: "Board service missing. Check the board firmware."))
                 return
             }
             p.discoverCharacteristics(BoardUUID.all, for: service)
@@ -313,6 +402,12 @@ extension BoardLink: CBPeripheralDelegate {
 
     nonisolated func peripheral(_ p: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         MainActor.assumeIsolated {
+            guard p === peripheral else { return }
+            if let error { failConnection(error.localizedDescription); return }
+            let available = Set((service.characteristics ?? []).map(\.uuid))
+            guard available.isSuperset(of: BoardUUID.all) else {
+                failConnection(String(localized: "Board firmware is missing required features. Update the firmware.")); return
+            }
             for c in service.characteristics ?? [] {
                 chars[c.uuid] = c
                 if [BoardUUID.reply, BoardUUID.status, BoardUUID.video].contains(c.uuid) { p.setNotifyValue(true, for: c) }
@@ -322,31 +417,43 @@ extension BoardLink: CBPeripheralDelegate {
 
     nonisolated func peripheral(_ p: CBPeripheral, didUpdateNotificationStateFor c: CBCharacteristic, error: Error?) {
         MainActor.assumeIsolated {
-            if let error { lastError = "subscribe \(c.uuid): \(error.localizedDescription)"; return }
+            guard p === peripheral else { return }
+            if let error { failConnection("subscribe \(c.uuid): \(error.localizedDescription)"); return }
+            guard c.isNotifying else { return }
             subscribed.insert(c.uuid)
             if !connected && subscribed.isSuperset(of: [BoardUUID.reply, BoardUUID.status, BoardUUID.video]) {
-                connected = true
-                linking = false
-                startFullStatusReads()
-                commands.linkUp()
-                readySince = now()
-                lastNotify = now()
-                onLinkUp?()
-                log("board ready (MTU \(mtu))")
+                // Reading the encrypted characteristic triggers pairing before setup is marked ready.
+                if let netChar = chars[BoardUUID.net] { p.readValue(for: netChar) }
             }
         }
     }
 
     nonisolated func peripheral(_ p: CBPeripheral, didUpdateValueFor c: CBCharacteristic, error: Error?) {
         MainActor.assumeIsolated {
+            guard p === peripheral else { return }
             lastNotify = now()
             if c.uuid == BoardUUID.net {
                 let waiters = netWaiters
                 netWaiters = []
                 if let error {
                     waiters.forEach { $0.resume(throwing: error) }
+                    if linking { failConnection(error.localizedDescription) }
                 } else if let v = c.value, let config = try? JSONDecoder().decode(NetConfig.self, from: v) {
                     net = config
+                    if linking && subscribed.isSuperset(of: [BoardUUID.reply, BoardUUID.status, BoardUUID.video]) {
+                        connectionDeadline?.cancel()
+                        stopScan()
+                        connected = true
+                        linking = false
+                        lastError = ""
+                        pairedID = p.identifier
+                        UserDefaults.standard.set(p.identifier.uuidString, forKey: Self.pairedKey)
+                        readySince = now()
+                        commands.linkUp()
+                        startFullStatusReads()
+                        onLinkUp?()
+                        log("board ready, encrypted configuration read (MTU \(mtu))")
+                    }
                     waiters.forEach { $0.resume(returning: config) }
                 } else {
                     waiters.forEach { $0.resume(throwing: DeviceError(message: "bad net config")) }

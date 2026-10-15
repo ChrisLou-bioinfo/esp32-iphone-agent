@@ -8,15 +8,24 @@ import UIKit
     static let defaultBaseURL = ""  // user enters their own OpenAI-compatible endpoint
     static let defaultModel = ""
 
+    @Published private(set) var provider: ModelProvider = .others
+    @Published private(set) var configurationRevision = 0
     private let defaults: UserDefaults
-    @Published var baseURL: String { didSet { defaults.set(baseURL, forKey: "baseURL"); if baseURL != oldValue { modelsChanged() } } }
-    @Published var model: String { didSet { defaults.set(model, forKey: "model") } }  // "" = first from GET /models
+    @Published var baseURL: String { didSet {
+        defaults.set(baseURL, forKey: "baseURL")
+        if baseURL != oldValue {
+            // Never carry an old provider's credential to a newly typed endpoint.
+            if URL(string: oldValue)?.host != URL(string: baseURL)?.host { apiKey = "" }
+            modelsChanged()
+        }
+    } }
+    @Published var model: String { didSet { defaults.set(model, forKey: "model"); configurationRevision += 1 } }  // empty preserves a legacy saved selection
     /// The model picked from the endpoint's list when `model` is empty (forgotten when the endpoint or key changes).
     @Published private(set) var autoModel: String { didSet { defaults.set(autoModel, forKey: "autoModel") } }
-    @Published var plannerModel: String { didSet { defaults.set(plannerModel, forKey: "plannerModel") } }  // "" = model
-    @Published var actorModel: String { didSet { defaults.set(actorModel, forKey: "actorModel") } }        // "" = model
-    @Published var tokenParam: String { didSet { defaults.set(tokenParam, forKey: "tokenParam") } }        // auto | ...
-    @Published var extraBody: String { didSet { defaults.set(extraBody, forKey: "extraBody") } }          // JSON object
+    @Published var plannerModel: String { didSet { defaults.set(plannerModel, forKey: "plannerModel"); configurationRevision += 1 } }  // "" = model
+    @Published var actorModel: String { didSet { defaults.set(actorModel, forKey: "actorModel"); configurationRevision += 1 } }        // "" = model
+    @Published var tokenParam: String { didSet { defaults.set(tokenParam, forKey: "tokenParam"); configurationRevision += 1 } }        // auto | ...
+    @Published var extraBody: String { didSet { defaults.set(extraBody, forKey: "extraBody"); configurationRevision += 1 } }          // JSON object
     @Published var apiKey: String { didSet { Keychain.set(apiKey, for: "llm-api-key"); DebugLog.redact([apiKey])
         if apiKey != oldValue { modelsChanged() } } }
     /// What the agent is called (Agent tab title, greeting, Live Activity); empty = the default.
@@ -55,14 +64,17 @@ import UIKit
         agentName = defaults.string(forKey: Self.agentNameKey) ?? Self.defaultAgentName
         onboarded = defaults.bool(forKey: "onboarded")
         acceptedDisclaimer = defaults.bool(forKey: "acceptedDisclaimer")
+        provider = defaults.string(forKey: "modelProvider").flatMap(ModelProvider.init(rawValue:))
+            ?? ModelProvider.infer(baseURL: baseURL, model: model)
         DebugLog.redact([apiKey])  // never in debug.log
     }
 
     private static func stored(_ v: String?) -> String? { v?.isEmpty == false ? v : nil }
 
-    /// The endpoint is filled in (the key is optional: some endpoints need none; the model is picked automatically).
+    /// The endpoint is valid (local endpoints may not require a key).
     var isConfigured: Bool {
-        URL(string: baseURL)?.scheme?.hasPrefix("http") == true
+        guard let url = URL(string: baseURL), let host = url.host, !host.isEmpty else { return false }
+        return ["http", "https"].contains(url.scheme?.lowercased() ?? "")
     }
 
     /// The manual override, else the model already picked from the endpoint, else nil.
@@ -72,21 +84,45 @@ import UIKit
         return autoModel.isEmpty ? nil : autoModel
     }
 
-    /// The manual override, else the first model from GET {base}/models (fetched once per endpoint and key).
+    /// Use an explicit model or a previously saved selection; never guess from API list order.
     func resolvedModel() async throws -> String {
         if let m = currentModel { return m }
-        let picked = try await LLMClient.firstModel(baseURL: baseURL, apiKey: apiKey)
-        autoModel = picked
-        return picked
+        throw LLMError(message: "Choose a vision model or enter its model ID before testing.")
     }
 
     private func modelsChanged() {
+        configurationRevision += 1
+        modelsRequest += 1
+        loadingModels = false
         autoModel = ""
         models = []
         modelsError = nil
     }
 
-    /// Fetch the model list; the latest request wins. "Automatic" becomes the first id.
+    var selectedProvider: ModelProvider {
+        get { provider }
+        set { selectProvider(newValue) }
+    }
+
+    func selectProvider(_ choice: ModelProvider) {
+        guard choice != provider else { return }
+        // Keep credentials scoped to an endpoint when switching providers.
+        if !apiKey.isEmpty { Keychain.set(apiKey, for: "llm-endpoint-" + baseURL) }
+        provider = choice
+        defaults.set(choice.rawValue, forKey: "modelProvider")
+        if choice == .others { configurationRevision += 1; return }
+        let changedEndpoint = baseURL != choice.baseURL
+        baseURL = choice.baseURL
+        if changedEndpoint { apiKey = Keychain.get("llm-endpoint-" + baseURL) ?? "" }
+        model = choice == .openRouterFree ? "openrouter/free" : ""
+        plannerModel = ""
+        actorModel = ""
+        tokenParam = "auto"
+        extraBody = "{}"
+        modelsChanged()
+    }
+
+    /// Fetch the model list; only a result for the current configuration is accepted.
     func loadModels() async {
         guard isConfigured else { return }
         modelsRequest += 1
@@ -98,7 +134,7 @@ import UIKit
             guard request == modelsRequest else { return }
             models = list
             modelsError = list.isEmpty ? String(localized: "The endpoint lists no models.") : nil
-            if let first = list.first { autoModel = first }
+            // Model order does not indicate image support; never silently select the first entry.
             DebugLog.write("models: \(list.count) listed, first \(list.first ?? "-")")
         } catch {
             guard request == modelsRequest else { return }

@@ -25,6 +25,7 @@ import UIKit
     let pointer: Pointer
     let agent: AgentLoop
     @Published private(set) var log: [LogLine] = []
+    @Published var modelError: String?
     @Published var modelOK: Bool?  // last LLM ping result
     @Published var hotspotSSID: String?
     @Published var otherWiFi: String?  // the phone is on this network, not the board's
@@ -54,6 +55,7 @@ import UIKit
     var currentIntent: SavedTask?
     var lastTask = ""
     var runStarted = Date()
+    private var settingsSink: AnyCancellable?
     var videoSink: AnyCancellable?
     var videoDir: URL?
     private(set) lazy var calibrator = AutoCalibrator(app: self)
@@ -87,6 +89,10 @@ import UIKit
         board.commands.onAppCommand = { [weak self] line in self?.handleAppCommand(line) }
         DebugLog.write("app launched \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") ?? "")"
                        + " (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") ?? ""))")
+        settingsSink = settings.$configurationRevision.dropFirst().sink { [weak self] _ in
+            self?.modelOK = nil
+            self?.modelError = nil
+        }
         board.onVideo = { [weak self] in self?.feed.receive($0) }
         board.onStatus = { [weak self] s in
             self?.feed.mirroring = s.ap == "streaming"
@@ -188,7 +194,10 @@ import UIKit
     var mood: Mood { runMood ?? (board.connected ? .idle : .sleeping) }
 
     /// The model endpoint is filled in (demo data simulates one).
-    var modelReady: Bool { MockMode.on || settings.isConfigured }
+    var modelReady: Bool {
+        MockMode.on || (settings.isConfigured && settings.currentModel != nil
+            && (settings.provider == .others || !settings.apiKey.isEmpty))
+    }
 
     func say(_ text: String) {
         log = Array((log + [LogLine(text: text)]).suffix(200))
@@ -228,15 +237,28 @@ import UIKit
             return say("LLM ok (demo data)")
         }
         let started = now()
+        let revision = settings.configurationRevision
+        modelError = nil
         do {
             let client = try await settings.client("actor")
-            let r = try await client.chat(system: "Reply with OK.", text: "ping", image: nil, maxTokens: 600, temperature: 0)
+            let image = UIGraphicsImageRenderer(size: CGSize(width: 64, height: 64)).image { context in
+                UIColor.red.setFill()
+                context.fill(CGRect(x: 0, y: 0, width: 64, height: 64))
+            }.jpegData(compressionQuality: 0.8)
+            let r = try await client.chat(system: "Name the dominant color in the image. Reply with one English word.",
+                                          text: "What color is this image?", image: image, maxTokens: 600, temperature: 0)
+            guard revision == settings.configurationRevision else { return }
+            guard r.text.lowercased().contains("red") else {
+                throw LLMError(message: "The model did not identify the sample image. Choose a model that supports images.")
+            }
             metrics.llmPingMs = (now() - started) * 1000
             metrics.llm(first: r.firstToken, total: r.total)
             modelOK = true
             say(String(format: "LLM ok in %.0f ms: %@", metrics.llmPingMs ?? 0, String(r.text.prefix(40))))
         } catch {
+            guard revision == settings.configurationRevision else { return }
             modelOK = false
+            modelError = error.localizedDescription
             say("LLM: \(error.localizedDescription)")
         }
     }

@@ -71,12 +71,14 @@ struct ConnectPage: View {
     @ViewBuilder private var boards: some View {
         if board.connected {
             CheckRow(title: "Connected to \(board.name.isEmpty ? "the board" : board.name)", done: true)
+        } else if board.connecting {
+            CheckRow(title: "Connecting to the board…", done: false, active: true, waiting: true)
         } else if board.linking {
             CheckRow(title: "Pairing… tap Pair when iOS asks", done: false, active: true, waiting: true)
         } else if board.pairedID == nil, board.found.count == 1, let f = board.found.first {
             CheckRow(title: "Found \(f.name)", done: false, active: true, waiting: true)
-        } else if board.pairedID == nil, board.found.count > 1 {
-            Text("Several boards nearby. Choose yours:").font(.subheadline).foregroundStyle(.secondary)
+        } else if !board.found.isEmpty {
+            Text("Choose your board:").font(.subheadline).foregroundStyle(.secondary)
                 .padding(.bottom, Space.s)
             ForEach(board.found) { f in
                 Button { board.pair(f.id) } label: {
@@ -89,8 +91,17 @@ struct ConnectPage: View {
                 }
             }
         } else {
-            CheckRow(title: "Not connected — plug the board into USB-C", done: false, active: true, waiting: true,
-                     detail: "I'll connect as soon as it's plugged in.")
+            CheckRow(title: "Searching for the board over Bluetooth…", done: false, active: true, waiting: board.scanning,
+                     detail: "Power the board and keep it nearby. USB connection alone does not confirm Bluetooth is ready.")
+        }
+        if let signal = board.signalStrength, signal < -80 {
+            Text("Weak Bluetooth signal. Move closer to the board or attach its antenna.")
+                .font(.footnote).foregroundStyle(.secondary).padding(.top, Space.s)
+        }
+        if !board.connected {
+            if !board.lastError.isEmpty {
+                Text(verbatim: board.lastError).font(.footnote).foregroundStyle(Palette.warning)
+            }
         }
     }
 }
@@ -241,11 +252,8 @@ struct BrainPage: View {
                     Text(verbatim: IntentStore.examples[0].prompt).font(.subheadline).foregroundStyle(.secondary)
                         .padding(.top, Space.s)
                 }
-                if !MockMode.on {
-                    Panel { PickedModelRow(settings: settings) }
-                }
             case false?:
-                Label("Could not reach the model. Check the URL and key.", systemImage: "xmark.octagon.fill")
+                Label(app.modelError ?? String(localized: "Could not reach the model. Check the URL and key."), systemImage: "xmark.octagon.fill")
                     .foregroundStyle(Palette.stop).font(.subheadline)
             case nil:
                 EmptyView()
@@ -259,11 +267,13 @@ struct ModelFieldsPanel: View {
     @ObservedObject var settings: Settings
 
     var body: some View {
-        Panel {
-            TextField("Base URL", text: $settings.baseURL, prompt: Text(verbatim: "https://example.com/v1"))
-                .keyboardType(.URL).textContentType(.URL)
-            Divider().padding(.vertical, Space.m)
-            SecureField("API key", text: $settings.apiKey, prompt: Text("API key (optional)"))
+        VStack(spacing: Space.xs) {
+            Panel { ProviderFields(settings: settings) }
+            if let url = settings.provider.keyURL {
+                Link("Get an API key", destination: url)
+                    .font(.footnote).tint(.secondary).underline()
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .trailing)
+            }
         }
         .textInputAutocapitalization(.never)
         .autocorrectionDisabled()

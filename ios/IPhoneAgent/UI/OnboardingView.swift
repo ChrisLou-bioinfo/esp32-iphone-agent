@@ -127,7 +127,7 @@ struct OnboardingView: View {
     /// Waiting on something the app detects by itself.
     private var waiting: Bool {
         switch page {
-        case .connect: return !board.connected && board.state == .poweredOn
+        case .connect: return !board.connected && (board.scanning || board.connecting || board.linking)
         case .see: return !streaming && (onHotspot || app.join.busy)
         case .act: return calibrator.busy
         case .brain: return testing
@@ -146,7 +146,7 @@ struct OnboardingView: View {
     private var primaryTitle: LocalizedStringKey {
         switch page {
         case .welcome: return "Get Started"
-        case .connect: return board.connected ? "Continue" : "Looking for the board…"
+        case .connect: return board.connected ? "Continue" : waiting ? "Looking for the board…" : "Scan Again"
         case .see:
             if streaming { return "Continue" }
             if onHotspot { return "Waiting for mirroring…" }
@@ -169,7 +169,7 @@ struct OnboardingView: View {
     private var primaryEnabled: Bool {
         switch page {
         case .welcome: return accepted
-        case .connect: return board.connected
+        case .connect: return board.connected || (board.state == .poweredOn && !waiting)
         case .see: return streaming || (!onHotspot && !app.join.busy)
         case .act: return !calibrator.busy && (pointer.calibrated || actReady)
         case .brain: return !testing && (app.modelOK == true || app.modelReady)
@@ -178,6 +178,8 @@ struct OnboardingView: View {
 
     private func primary() {
         switch page {
+        case .connect where !board.connected:
+            board.retryDiscovery()
         case .see where !streaming:
             app.startJoin()
         case .act where !pointer.calibrated:

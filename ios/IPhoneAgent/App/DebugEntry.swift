@@ -6,10 +6,14 @@ import Foundation
 /// or launch arguments: -run "<task>", -calibrate, -bench 256, -snap
 /// (e.g. `xcrun devicectl device process launch --device <id> <bundle id> -run "Open Clock"`).
 /// Commands that need the board wait up to 30 s for it (and mirroring, for a run) before giving up.
+/// The URL commands exist in Debug builds only: in a release any web page could open them.
 extension AppModel {
     /// True when the URL was a debug command (iphoneagent://run/<id> from the Live Activity is not).
     @discardableResult
     func handleDebug(_ url: URL) -> Bool {
+        #if !DEBUG
+        return false
+        #endif
         guard url.scheme == "iphoneagent", let host = url.host else { return false }
         let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         func arg(_ name: String) -> String? { query.first { $0.name == name }?.value }

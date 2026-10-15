@@ -4,7 +4,10 @@ import SwiftUI
 struct IPhoneAgentApp: App {
     @StateObject private var app = AppModel.shared
 
-    init() { _ = AppModel.shared }  // also on a background launch for an App Intent, which shows no scene
+    init() {
+        _ = AppModel.shared  // also on a background launch for an App Intent, which shows no scene
+        CrashReports.shared.start()
+    }
 
     var body: some Scene {
         WindowGroup {

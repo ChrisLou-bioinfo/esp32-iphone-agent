@@ -12,6 +12,34 @@ struct AboutView: View {
         return "\(info?["CFBundleShortVersionString"] as? String ?? "1.0") (\(info?["CFBundleVersion"] as? String ?? "1"))"
     }
 
+    /// A new GitHub issue, prefilled with what we always ask for.
+    private var bugReport: URL {
+        let device = UIDevice.current
+        let body = """
+        **What happened**
+
+
+        **What you expected**
+
+
+        **Steps**
+        1.
+
+        ESP32 Agent \(version) · \(device.systemName) \(device.systemVersion) · \(Self.model)
+        (Attach the zip from Settings › About › Logs › Export all logs.)
+        """
+        var c = URLComponents(url: Self.repo.appendingPathComponent("issues/new"), resolvingAgainstBaseURL: false)!
+        c.queryItems = [URLQueryItem(name: "labels", value: "bug"), URLQueryItem(name: "body", value: body)]
+        return c.url ?? Self.repo
+    }
+
+    /// The hardware model, e.g. "iPhone17,2".
+    private static let model: String = {
+        var info = utsname()
+        uname(&info)
+        return withUnsafeBytes(of: &info.machine) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
+    }()
+
     var body: some View {
         List {
             Section {
@@ -41,9 +69,19 @@ struct AboutView: View {
                 Text("Open source. No data leaves this iPhone except the requests to the model endpoint you set up.")
             }
             Section {
+                Link(destination: bugReport) {
+                    HStack {
+                        SettingsLabel(title: "Report a bug", symbol: "ladybug.fill", color: .red)
+                        Spacer()
+                        Image(systemName: "arrow.up.forward.app").foregroundStyle(.tertiary)
+                    }
+                }
+                .tint(.primary)
                 NavigationLink { LogsView(app: app) } label: {
                     SettingsLabel(title: "Logs", symbol: "text.alignleft", color: .gray)
                 }
+            } footer: {
+                Text("Opens a GitHub issue with your version filled in. Attach the zip from Logs › Export all logs: it holds the debug log, the runs and any crash reports iOS gave the app.")
             }
         }
         .navigationTitle("About")
@@ -142,7 +180,7 @@ struct LogsView: View {
                     ShareLink(item: DebugLog.url) { Label("Share debug log", systemImage: "doc.text.magnifyingglass") }
                 }
             } footer: {
-                Text("A zip of debug.log and every run (steps, model replies, screenshots, video). Your API key is never in it.")
+                Text("A zip of debug.log, crash reports from iOS and every run (steps, model replies, screenshots, video). Your API key is never in it.")
             }
             if app.log.isEmpty {
                 Text("Nothing logged yet.").foregroundStyle(.secondary)
@@ -171,7 +209,7 @@ struct LogsView: View {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         DebugLog.write("export: all logs")
         Task {
-            let result = await Task.detached { Result { try TraceStore.zip(docs, name: "iphone-agent-logs.zip") } }.value
+            let result = await Task.detached { Result { try TraceStore.zip(docs, name: "esp32-agent-logs.zip") } }.value
             exporting = false
             switch result {
             case .success(let url): shareURL = url

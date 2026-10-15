@@ -30,6 +30,9 @@ targets:
         CFBundleDisplayName: ESP32 Agent
         CFBundleDevelopmentRegion: en
         CFBundleLocalizations: [en, zh-Hans]
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false  # HTTPS only
         UILaunchScreen:
           UIColorName: LaunchBackground
           UIImageName: LaunchLogo
@@ -73,8 +76,8 @@ targets:
         CFBundleDisplayName: ESP32 Agent
         CFBundleDevelopmentRegion: en
         CFBundleLocalizations: [en, zh-Hans]
-        CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         IAAppGroup: group.$(IA_BUNDLE_ID)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension

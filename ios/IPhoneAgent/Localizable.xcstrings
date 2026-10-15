@@ -1,66 +1,66 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-  "The run is still active. Return to the Home Screen to continue.": {
-    "localizations": {
-      "zh-Hans": {
-        "stringUnit": {
-          "state": "translated",
-          "value": "任务仍在进行中。请返回手机主屏幕以继续。"
+    "The run is still active. Return to the Home Screen to continue." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "任务仍在进行中。请返回手机主屏幕以继续。"
+          }
         }
       }
-    }
-  },
-  "Paused": {
-    "localizations": {
-      "zh-Hans": {
-        "stringUnit": {
-          "state": "translated",
-          "value": "已暂停"
+    },
+    "Paused" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已暂停"
+          }
         }
       }
-    }
-  },
-  "The board connection was lost. Move the board closer and keep it powered on, then tap Retry.": {
-    "localizations": {
-      "zh-Hans": {
-        "stringUnit": {
-          "state": "translated",
-          "value": "与板子的连接已断开。请把板子移近并保持供电，然后点击重试。"
+    },
+    "The board connection was lost. Move the board closer and keep it powered on, then tap Retry." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与板子的连接已断开。请把板子移近并保持供电，然后点击重试。"
+          }
         }
       }
-    }
-  },
-  "The run ended before it could finish. Retry to start again.": {
-    "localizations": {
-      "zh-Hans": {
-        "stringUnit": {
-          "state": "translated",
-          "value": "任务未完成便已结束。点击重试重新开始。"
+    },
+    "The run ended before it could finish. Retry to start again." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "任务未完成便已结束。点击重试重新开始。"
+          }
         }
       }
-    }
-  },
-  "Error details": {
-    "localizations": {
-      "zh-Hans": {
-        "stringUnit": {
-          "state": "translated",
-          "value": "错误详情"
+    },
+    "Error details" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "错误详情"
+          }
         }
       }
-    }
-  },
-  "Could not finish": {
-    "localizations": {
-      "zh-Hans": {
-        "stringUnit": {
-          "state": "translated",
-          "value": "未能完成"
+    },
+    "Could not finish" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未能完成"
+          }
         }
       }
-    }
-  },
+    },
     "" : {
       "shouldTranslate" : false
     },
@@ -136,16 +136,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "一个 .zip，包含步骤、指标、截图、视频帧和 debug.log，写入前已脱敏。"
-          }
-        }
-      }
-    },
-    "A zip of debug.log and every run (steps, model replies, screenshots, video). Your API key is never in it." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "包含 debug.log 和每次运行（步骤、模型回复、截图、视频）的压缩包。不会包含你的 API 密钥。"
           }
         }
       }
@@ -5584,6 +5574,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未收到最新设备状态，请重试。"
+          }
+        }
+      }
+    },
+    "Report a bug" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "报告问题"
+          }
+        }
+      }
+    },
+    "Opens a GitHub issue with your version filled in. Attach the zip from Logs › Export all logs: it holds the debug log, the runs and any crash reports iOS gave the app." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开一个已填好版本信息的 GitHub issue。请附上「日志 › 导出全部日志」生成的压缩包：里面有调试日志、运行记录，以及 iOS 交给本 App 的崩溃报告。"
+          }
+        }
+      }
+    },
+    "A zip of debug.log, crash reports from iOS and every run (steps, model replies, screenshots, video). Your API key is never in it." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "包含 debug.log、iOS 崩溃报告和每次运行（步骤、模型回复、截图、视频）的压缩包。不会包含你的 API 密钥。"
           }
         }
       }

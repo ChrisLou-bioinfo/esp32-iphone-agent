@@ -7,14 +7,13 @@ extension AppModel {
 
     private var inBackground: Bool { UIApplication.shared.applicationState == .background }
 
-    /// Leaves our own app without touching the screen: iOS's own suspend (as the Home gesture does),
-    /// then the board's Cmd+H and home flick as fallbacks. The model is never asked to do this.
+    /// Leaves our own app without touching the screen: the board's Cmd+H, then its home flick as a fallback.
+    /// The model is never asked to do this.
     func leaveApp() async -> Bool {
-        for method in ["suspend", "cmd+h", "home swipe"] {
+        for method in ["cmd+h", "home swipe"] {
             if inBackground { return true }
             do {
                 switch method {
-                case "suspend": await MainActor.run { _ = UIApplication.shared.perform(NSSelectorFromString("suspend")) }
                 case "cmd+h": try await pointer.key("cmd+h")
                 default: try await pointer.goHome()
                 }

@@ -25,7 +25,7 @@ The active phone app (`com.onehumanbeing.esp32agent`) logged HTTP 200 for the 10
 - 74 iOS unit tests passed, including legacy-provider migration, image-check validation, and streamed provider errors.
 - Final signed device build succeeded.
 - Simulator layout inspected with the live public OpenRouter model catalog. A temporary presentation override opened the sheet for inspection; it was removed before the final device build. Search typing and large Dynamic Type interactions were not manually exercised.
-- Updated the active phone app. A fresh test launch was blocked by the phone's lock screen; post-update live inference remains pending unlock. The 10:08 success above predates this update.
+- Updated the active phone app. After Henry unlocked it, the final build passed live inference at 10:16:47 China time: `openrouter/free`, one sample image, HTTP 200, response `Red`, 1,956 ms total. The model catalog loaded 465 entries. The existing phone credential remained in place; no credential extraction was needed.
 - No API key was read, exported, or included in source.
 
 ## Design convention

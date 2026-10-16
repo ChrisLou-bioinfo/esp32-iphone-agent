@@ -14,7 +14,8 @@ struct MiniPhoneDemo: View {
         switch kind {
         case .plugIn:
             return [("Plug the board into the USB-C port", nil), ("Plug the board into the USB-C port", nil),
-                    ("Tap Pair when iOS asks", CGPoint(x: 0.68, y: 0.56))]
+                    ("Tap Pair when iOS asks", CGPoint(x: 0.68, y: 0.56)),
+                    ("No antenna? Keep it right beside your phone", nil)]
         case .wifi:
             return [("Open Settings › Wi-Fi", CGPoint(x: 0.5, y: 0.3)), ("Choose the board's network", CGPoint(x: 0.5, y: 0.42)),
                     ("Paste the password, then Join", CGPoint(x: 0.84, y: 0.13))]
@@ -35,6 +36,13 @@ struct MiniPhoneDemo: View {
                 .frame(width: 132, height: 270)
                 .scaleEffect(kind == .plugIn ? 5.0 / 6.0 : 1)
                 .frame(width: kind == .plugIn ? 110 : 132, height: kind == .plugIn ? 225 : 270)
+                .overlay(alignment: .bottomTrailing) {
+                    if kind == .plugIn, frame == 3 {
+                        BoardProximityIllustration()
+                            .offset(x: 48, y: -Space.l)
+                            .transition(.opacity)
+                    }
+                }
             Text(frames[frame].caption)
                 .font(.subheadline.weight(.semibold))
                 .multilineTextAlignment(.center)

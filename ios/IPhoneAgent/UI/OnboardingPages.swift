@@ -95,8 +95,8 @@ struct ConnectPage: View {
         }
         if !board.connected || (board.signalStrength ?? 0) < -80 {
             Text((board.signalStrength ?? 0) < -80
-                 ? "Weak signal. Move your phone closer to the board or attach its antenna."
-                 : "Keep your phone close to the board. If it won’t connect, attach its antenna.")
+                 ? "Weak signal? Try placing the board right against the side of your phone, or attach its antenna."
+                 : "No antenna? Try placing the board right against the side of your phone.")
                 .font(.footnote).foregroundStyle(.secondary).padding(.top, Space.s)
         }
         if !board.connected {

@@ -28,6 +28,7 @@
 		2A48924EF6EF7A39D5A05E21 /* ReviewMedia.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43CF0FDDD155E930C9AC80D8 /* ReviewMedia.swift */; };
 		2CF0D6C8101BF02E0EDF44E2 /* ModelPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24E3598C8B1D1025A419CE5D /* ModelPicker.swift */; };
 		2CF6A30C3D72E05EEBC6FFED /* IslandTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A54BC007EE5C64A13CDEE9EE /* IslandTests.swift */; };
+		3298C81AB2EC4CBBC912ACFC /* BoardProximityIllustration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5AF33659891C2EFF70D356A /* BoardProximityIllustration.swift */; };
 		3607786AAF7296B3414B6F08 /* VisionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1887982FE1A729487269296E /* VisionTests.swift */; };
 		38112BBE7634E2E538DBA9D0 /* ModelSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2BE9FDCCB259EC7A7E259E4 /* ModelSelectionView.swift */; };
 		419FA08397BAF31F91A62633 /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B88A1538529C9674B323370 /* DebugLog.swift */; };
@@ -205,6 +206,7 @@
 		A11E0FF01881451EBB3D18FF /* AgentActivity.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = AgentActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A409B3696F547E712B4D4D14 /* PokeableFace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokeableFace.swift; sourceTree = "<group>"; };
 		A54BC007EE5C64A13CDEE9EE /* IslandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IslandTests.swift; sourceTree = "<group>"; };
+		A5AF33659891C2EFF70D356A /* BoardProximityIllustration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoardProximityIllustration.swift; sourceTree = "<group>"; };
 		A5CC3BCF7F90AF60B075DD96 /* Pointer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pointer.swift; sourceTree = "<group>"; };
 		A7314ABD64EC1106422C685E /* AgentFace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentFace.swift; sourceTree = "<group>"; };
 		AA04712864CA08DA02B08369 /* ShareTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareTests.swift; sourceTree = "<group>"; };
@@ -324,6 +326,7 @@
 			isa = PBXGroup;
 			children = (
 				E948F0EBC262C7ABF8E413E5 /* AboutView.swift */,
+				A5AF33659891C2EFF70D356A /* BoardProximityIllustration.swift */,
 				E2E3712143A195602610004B /* CalibrationToast.swift */,
 				E1828194EBD7CDB8FEFF8643 /* CalibrationViews.swift */,
 				2F3122E7A1DB53F3BFCCFD06 /* DiagnosticsView.swift */,
@@ -638,6 +641,7 @@
 				66CADEEED2A075ECD5070131 /* BoardCommands.swift in Sources */,
 				D48CF75915F3D1FFE18ADC3A /* BoardLink.swift in Sources */,
 				BD09EA4793C0B09297190CD9 /* BoardProtocol.swift in Sources */,
+				3298C81AB2EC4CBBC912ACFC /* BoardProximityIllustration.swift in Sources */,
 				173BD54931BD69B83D7F6FD3 /* CalibrationToast.swift in Sources */,
 				8A11B8068D97194AA3C9723B /* CalibrationViews.swift in Sources */,
 				006434261FDDF11EA3BF16E6 /* DebugEntry.swift in Sources */,

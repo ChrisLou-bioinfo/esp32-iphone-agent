@@ -41,7 +41,7 @@ struct AgentLiveActivity: Widget {
                             Text(since, style: .timer).monospacedDigit().font(.footnote)
                                 .accessibilityLabel("Waiting time")
                         }
-                        if s.line != s.labelFull {
+                        if s.line != s.labelFull && (s.phase != .running || s.finished) {
                             Text(verbatim: s.line).font(.footnote).foregroundStyle(.secondary).lineLimit(2)
                         }
                         if s.phase == .running {
@@ -68,8 +68,8 @@ struct AgentLiveActivity: Widget {
                 } else {
                     VStack(spacing: 0) {
                         Eyes(state: s).frame(width: 16, height: 16)
-                        Text(s.mood == .thinking ? "Think" : s.mood == .acting ? "Act" : s.finished ? "End" : "Wait")
-                            .font(.caption2).foregroundStyle(.white).lineLimit(1)
+                        Text(verbatim: s.minimalLabel ?? s.label)
+                            .font(.caption2).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.8)
                     }
                     .frame(width: 36)
                     .accessibilityLabel(Text(verbatim: s.labelFull))
@@ -175,7 +175,9 @@ private struct LockScreenView: View {
                 if !s.finished && !s.labelFull.isEmpty {
                     Says(state: s, full: true).font(.subheadline.weight(.semibold))
                 }
-                Text(verbatim: s.line).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                if s.phase != .running || s.finished {
+                    Text(verbatim: s.line).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                }
                 if s.finished {
                     Label(s.mood == .success ? "Done · tap to review" : "Ended · tap to review",
                           systemImage: s.mood == .success ? "checkmark.circle.fill" : "play.circle")

@@ -58,7 +58,7 @@ extension Pointer: Gestures {}
     var onStep: (() -> Void)?
     /// What the agent is busy with between steps, for the Dynamic Island (looking, thinking, about to act).
     var onDoing: ((Doing) -> Void)?
-    enum Doing { case looking, thinking, retrying, acting(JObject) }
+    enum Doing { case looking, waiting, planning, thinking, retrying, acting(JObject) }
     /// Hints from a saved intent's checklist, appended to the actor's system prompt (empty = the original prompt).
     var hints: [String] = []
     /// "Needs your help": asked when the actor gives up or errors repeat; nil = end the run as before.
@@ -145,7 +145,15 @@ extension Pointer: Gestures {}
         }
         guard let screen, screen.live else { throw BlindError() }  // never let the model act blind
         let frame = screen.frame, started = now()
-        onDoing?(retryTimeout ? .thinking : .retrying)
+        onDoing?(retryTimeout ? .waiting : .retrying)
+        let reporting = llm as? ModelProgressReporting
+        reporting?.onProgress = { [weak self] progress in
+            switch progress {
+            case .waiting: self?.onDoing?(retryTimeout ? .waiting : .retrying)
+            case .receiving: self?.onDoing?(role == "planner" ? .planning : .thinking)
+            }
+        }
+        defer { reporting?.onProgress = nil }
         let reply: ChatResult
         do {
             reply = try await llm.chat(system: system, text: prompt, image: frame,

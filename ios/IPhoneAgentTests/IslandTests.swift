@@ -12,6 +12,14 @@ import XCTest
         XCTAssertEqual(IslandStatus.gaze(up), CGPoint(x: 0, y: -1))
     }
 
+    func testMinimalTextKeepsPendingPlanningThinkingAndRetryDistinct() {
+        let states = [IslandStatus.waiting, .planning, .thinking, .retrying]
+        XCTAssertEqual(states.compactMap(\.minimal), ["Wait", "Plan", "Think", "Retry"])
+        XCTAssertTrue(states.allSatisfy(\.waits))
+        XCTAssertEqual(IslandStatus.acting(["action": .str("swipe")]).minimal, "Swipe")
+        XCTAssertEqual(IslandStatus.acting(["action": .str("wait")]).minimal, "Wait")
+    }
+
     func testTargetFromThought() {
         XCTAssertEqual(IslandStatus.target("I am on the home screen. I tap the Search pill to find Clock."), "Search")
         XCTAssertEqual(IslandStatus.target("My last tap opened Alarms. I tap + to add an alarm."), "+")

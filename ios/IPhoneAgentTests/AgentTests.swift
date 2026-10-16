@@ -26,6 +26,30 @@ import XCTest
         XCTAssertTrue(agent.steps.isEmpty)
     }
 
+    func testPlannerAndActorHaveDistinctPendingAndReceivingStates() async throws {
+        let model = ProgressModel()
+        let agent = AgentLoop(phone: nil, screen: FakeScreen(), actor: model, planner: model, trace: nil)
+        var states: [String] = []
+        agent.onDoing = {
+            switch $0 {
+            case .waiting: states.append("waiting")
+            case .planning: states.append("planning")
+            case .thinking: states.append("thinking")
+            default: break
+            }
+        }
+        try await agent.replan()
+        XCTAssertEqual(states.last, "planning")
+        XCTAssertEqual(states.first, "waiting")
+        XCTAssertNil(model.onProgress)
+        states = []
+        _ = try await agent.nextActions()
+        XCTAssertEqual(states.first, "waiting")
+        XCTAssertEqual(states.last, "thinking")
+        XCTAssertFalse(states.contains("planning"))
+        XCTAssertNil(model.onProgress)
+    }
+
     func testParseSingleAction() throws {
         let acts = try Actions.parseActions("THINK: The Search pill is visible, so I tap it.\nDO: tap 500 814")
         XCTAssertEqual(acts, [["thought": .str("The Search pill is visible, so I tap it."), "thought_zh": .str(""),
@@ -204,5 +228,15 @@ import XCTest
         calls += 1
         if calls <= failures { throw URLError(.timedOut) }
         return ChatResult(text: "1. Observe the screen", total: 0)
+    }
+}
+
+@MainActor private final class ProgressModel: ChatModel, ModelProgressReporting {
+    let model = "progress-test"
+    var onProgress: ((ModelResponseProgress) -> Void)?
+    func chat(system: String, text: String, image: Data?, maxTokens: Int, temperature: Double) async throws -> ChatResult {
+        onProgress?(.waiting)
+        onProgress?(.receiving)
+        return ChatResult(text: "THINK: Wait for the screen\nDO: wait", total: 0)
     }
 }

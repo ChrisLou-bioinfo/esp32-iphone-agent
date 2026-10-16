@@ -137,6 +137,8 @@ extension AppModel {
         guard agent.running, help == nil else { return }
         switch d {
         case .looking: live.show(.looking, mood: .thinking)
+        case .waiting: live.show(.waiting, mood: .thinking)
+        case .planning: live.show(.planning, mood: .thinking)
         case .thinking: live.show(.thinking, mood: .thinking)
         case .retrying: live.show(.retrying, mood: .thinking)
         case .acting(let act): live.show(.acting(act), mood: .acting)

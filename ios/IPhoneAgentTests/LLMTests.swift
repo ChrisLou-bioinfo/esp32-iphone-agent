@@ -104,6 +104,21 @@ final class StubProtocol: URLProtocol {
         }
     }
 
+    func testProgressWaitsThroughKeepalivesAndStartsOnReasoning() async throws {
+        let llm = client("progress")
+        var progress: [ModelResponseProgress] = []
+        llm.onProgress = { progress.append($0) }
+        StubProtocol.respond = { _ in
+            (200, "text/event-stream", ": heartbeat\n\n"
+             + "data: {\"choices\":[{\"delta\":{\"role\":\"assistant\"}}]}\n\n"
+             + "data: {\"choices\":[{\"delta\":{\"reasoning\":\"planning\"}}]}\n\n"
+             + "data: {\"choices\":[{\"delta\":{\"content\":\"Red\"}}]}\n\n"
+             + "data: [DONE]\n\n")
+        }
+        _ = try await llm.chat(system: "test", text: "test")
+        XCTAssertEqual(progress, [.waiting, .receiving])
+    }
+
     func client(_ model: String, extra: [String: Any] = [:], tokenParam: String = "auto") -> LLMClient {
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [StubProtocol.self]

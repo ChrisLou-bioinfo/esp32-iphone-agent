@@ -8,47 +8,69 @@ struct IslandStatus: Equatable {
     var short: String
     var full: String
     var look: CGPoint?
+    var minimal: String? = nil
 
     var waits: Bool { look == nil }
 
     static let compactLimit = 16
 
     static var looking: Self {
-        Self(short: String(localized: "Looking…"), full: String(localized: "Looking at the screen…"), look: nil)
+        Self(short: String(localized: "Looking…"), full: String(localized: "Looking at the screen…"), look: nil, minimal: String(localized: "Look"))
     }
 
     static var thinking: Self {
-        Self(short: String(localized: "Thinking…"), full: String(localized: "Thinking…"), look: nil)
+        Self(short: String(localized: "Thinking…"), full: String(localized: "Thinking about my next move…"), look: nil, minimal: String(localized: "Think"))
+    }
+
+    static var waiting: Self {
+        Self(short: String(localized: "Waiting…"), full: String(localized: "Waiting for the model to respond…"),
+             look: nil, minimal: String(localized: "Wait"))
+    }
+
+    static var planning: Self {
+        Self(short: String(localized: "Planning…"), full: String(localized: "Thinking through my plan…"),
+             look: nil, minimal: String(localized: "Plan"))
     }
 
     static var retrying: Self {
-        Self(short: String(localized: "Retrying…"), full: String(localized: "The model timed out. Trying once more…"), look: nil)
+        Self(short: String(localized: "Retrying…"), full: String(localized: "The model timed out. Trying once more…"), look: nil, minimal: String(localized: "Retry"))
     }
 
     static var help: Self {
-        Self(short: String(localized: "Need help"), full: String(localized: "Need your help"), look: .zero)
+        Self(short: String(localized: "Need help"), full: String(localized: "Need your help"), look: .zero, minimal: String(localized: "Help"))
     }
 
     static var yourTurn: Self {
-        Self(short: String(localized: "Your turn"), full: String(localized: "Your turn"), look: CGPoint(x: 0, y: 0.6))
+        Self(short: String(localized: "Your turn"), full: String(localized: "Your turn"), look: CGPoint(x: 0, y: 0.6), minimal: String(localized: "You"))
     }
 
     /// The end of a run, from its outcome's mood.
     static func ended(_ mood: Mood) -> Self {
         switch mood {
-        case .success: return Self(short: String(localized: "Done!"), full: String(localized: "Done!"), look: .zero)
-        case .failure: return Self(short: String(localized: "Didn't finish"), full: String(localized: "Didn't finish"), look: .zero)
-        default: return Self(short: String(localized: "Stopped"), full: String(localized: "Stopped"), look: .zero)
+        case .success: return Self(short: String(localized: "Done!"), full: String(localized: "Done!"), look: .zero, minimal: String(localized: "Done"))
+        case .failure: return Self(short: String(localized: "Didn't finish"), full: String(localized: "Didn't finish"), look: .zero, minimal: String(localized: "Error"))
+        default: return Self(short: String(localized: "Stopped"), full: String(localized: "Stopped"), look: .zero, minimal: String(localized: "Stop"))
         }
     }
 
     /// About to do `act` (its thought, if any, names the target: "… so I tap the Clock app").
     static func acting(_ act: JObject) -> Self {
         let look = gaze(act)
+        let minimal: String
+        switch act["action"]?.str {
+        case "tap": minimal = String(localized: "Tap")
+        case "type": minimal = String(localized: "Type")
+        case "key": minimal = String(localized: "Key")
+        case "swipe": minimal = String(localized: "Swipe")
+        case "path", "circle": minimal = String(localized: "Draw")
+        case "home": minimal = String(localized: "Home")
+        case "back": minimal = String(localized: "Back")
+        default: minimal = String(localized: "Wait")
+        }
         func say(_ verb: (String) -> String, _ bare: String, _ what: String?) -> Self {
-            guard let what, !what.isEmpty else { return Self(short: bare, full: bare, look: look) }
+            guard let what, !what.isEmpty else { return Self(short: bare, full: bare, look: look, minimal: minimal) }
             let room = compactLimit - verb("").count
-            return Self(short: verb(clip(what, room)), full: verb(clip(what, 28)), look: look)
+            return Self(short: verb(clip(what, room)), full: verb(clip(what, 28)), look: look, minimal: minimal)
         }
         switch act["action"]?.str {
         case "tap":
@@ -64,15 +86,15 @@ struct IslandStatus: Equatable {
             } else {
                 label = look.y > 0 ? String(localized: "Swiping down") : String(localized: "Swiping up")
             }
-            return Self(short: label, full: label, look: look)
+            return Self(short: label, full: label, look: look, minimal: minimal)
         case "path", "circle":
-            return Self(short: String(localized: "Drawing…"), full: String(localized: "Drawing…"), look: look)
+            return Self(short: String(localized: "Drawing…"), full: String(localized: "Drawing…"), look: look, minimal: minimal)
         case "home":
-            return Self(short: String(localized: "Going home"), full: String(localized: "Going to the Home Screen"), look: look)
+            return Self(short: String(localized: "Going home"), full: String(localized: "Going to the Home Screen"), look: look, minimal: minimal)
         case "back":
-            return Self(short: String(localized: "Going back"), full: String(localized: "Going back"), look: look)
+            return Self(short: String(localized: "Going back"), full: String(localized: "Going back"), look: look, minimal: minimal)
         default:
-            return Self(short: String(localized: "Waiting…"), full: String(localized: "Waiting…"), look: look)
+            return Self(short: String(localized: "Waiting…"), full: String(localized: "Waiting for the screen…"), look: nil, minimal: minimal)
         }
     }
 

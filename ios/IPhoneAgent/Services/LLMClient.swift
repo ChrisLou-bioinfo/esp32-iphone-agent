@@ -38,7 +38,8 @@ struct LLMError: LocalizedError {
 /// Client for any OpenAI-compatible chat endpoint (vision models). Port of llm.py, with streaming:
 /// Cloudflare cuts requests that send nothing for ~100 s, so replies are streamed (SSE). A server that
 /// ignores `stream` and answers with plain JSON works too.
-@MainActor final class LLMClient: ChatModel {
+@MainActor final class LLMClient: ChatModel, ModelProgressReporting {
+    var onProgress: ((ModelResponseProgress) -> Void)?
     static let tokenParams = ["max_tokens", "max_completion_tokens"]
 
     let model: String
@@ -88,6 +89,7 @@ struct LLMError: LocalizedError {
 
     private func once(system: String, text: String, images: [Data], maxTokens: Int,
                       temperature: Double) async throws -> ChatResult {
+        onProgress?(.waiting)
         var content: [[String: Any]] = images.map {
             ["type": "image_url", "image_url": ["url": "data:image/jpeg;base64," + $0.base64EncodedString()]]
         }
@@ -173,10 +175,12 @@ struct LLMError: LocalizedError {
             for try await b in bytes { raw.append(b) }
             var result = try Self.message(raw)
             result.responseSeconds = responseSeconds
+            if !result.text.isEmpty || result.reasoningChars > 0 { onProgress?(.receiving) }
             return (status, result, "")
         }
         var result = ChatResult(text: "", firstToken: nil, total: 0)
         result.responseSeconds = responseSeconds
+        var reportedReceiving = false
         for try await line in bytes.lines {
             guard line.hasPrefix("data:") else { continue }
             let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
@@ -186,7 +190,12 @@ struct LLMError: LocalizedError {
             let choice = (json["choices"] as? [[String: Any]])?.first
             let delta = choice?["delta"] as? [String: Any]
             Self.note(json, choice, into: &result)
-            result.reasoningChars += Self.reasoning(delta).count
+            let reasoning = Self.reasoning(delta)
+            if !reportedReceiving, !reasoning.isEmpty || !(delta?["content"] as? String ?? "").isEmpty {
+                reportedReceiving = true
+                onProgress?(.receiving)
+            }
+            result.reasoningChars += reasoning.count
             guard let piece = delta?["content"] as? String, !piece.isEmpty else { continue }
             if result.firstToken == nil { result.firstToken = now() - started }
             result.text += piece

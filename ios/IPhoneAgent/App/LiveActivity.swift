@@ -92,6 +92,7 @@ import Foundation
         if status.waits {
             if state.label != status.short || state.waitingSince == nil { state.waitingSince = Date() }
         } else { state.waitingSince = nil }
+        state.minimalLabel = status.minimal ?? status.short
         state.label = status.short
         state.labelFull = status.full
         if let look = status.look {

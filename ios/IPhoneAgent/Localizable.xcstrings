@@ -1823,7 +1823,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "归位"
+            "value" : "主页"
           }
         }
       }
@@ -5344,6 +5344,126 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "等待时长"
+          }
+        }
+      }
+    },
+    "Look" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看"
+          }
+        }
+      }
+    },
+    "Thinking about my next move…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在思考下一步…"
+          }
+        }
+      }
+    },
+    "Waiting for the model to respond…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在等待模型回复…"
+          }
+        }
+      }
+    },
+    "Planning…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在规划…"
+          }
+        }
+      }
+    },
+    "Thinking through my plan…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在构思我的计划…"
+          }
+        }
+      }
+    },
+    "Plan" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规划"
+          }
+        }
+      }
+    },
+    "You" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等你"
+          }
+        }
+      }
+    },
+    "Tap" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点击"
+          }
+        }
+      }
+    },
+    "Type" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入"
+          }
+        }
+      }
+    },
+    "Key" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按键"
+          }
+        }
+      }
+    },
+    "Draw" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "绘制"
+          }
+        }
+      }
+    },
+    "Waiting for the screen…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在等待屏幕变化…"
           }
         }
       }

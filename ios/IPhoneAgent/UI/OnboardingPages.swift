@@ -91,11 +91,12 @@ struct ConnectPage: View {
                 }
             }
         } else {
-            CheckRow(title: "Searching for the board over Bluetooth…", done: false, active: true, waiting: board.scanning,
-                     detail: "Power the board and keep it nearby. USB connection alone does not confirm Bluetooth is ready.")
+            CheckRow(title: "Searching for the board over Bluetooth…", done: false, active: true, waiting: board.scanning)
         }
-        if let signal = board.signalStrength, signal < -80 {
-            Text("Weak Bluetooth signal. Move closer to the board or attach its antenna.")
+        if !board.connected || (board.signalStrength ?? 0) < -80 {
+            Text((board.signalStrength ?? 0) < -80
+                 ? "Weak signal. Move your phone closer to the board or attach its antenna."
+                 : "Keep your phone close to the board. If it won’t connect, attach its antenna.")
                 .font(.footnote).foregroundStyle(.secondary).padding(.top, Space.s)
         }
         if !board.connected {

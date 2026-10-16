@@ -33,6 +33,8 @@ struct MiniPhoneDemo: View {
             MiniPhone { screen }
                 .overlay { GeometryReader { g in finger(in: g.size) } }
                 .frame(width: 132, height: 270)
+                .scaleEffect(kind == .plugIn ? 5.0 / 6.0 : 1)
+                .frame(width: kind == .plugIn ? 110 : 132, height: kind == .plugIn ? 225 : 270)
             Text(frames[frame].caption)
                 .font(.subheadline.weight(.semibold))
                 .multilineTextAlignment(.center)

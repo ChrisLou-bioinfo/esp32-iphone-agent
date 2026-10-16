@@ -34,6 +34,7 @@ struct HomeView: View {
                 intentSection
             }
             .listStyle(.insetGrouped)
+            .refreshable { await app.refreshHomeStatus() }
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle(Text(verbatim: settings.agentName))
             .navigationBarTitleDisplayMode(.inline)
@@ -100,7 +101,8 @@ struct HomeView: View {
 
     private var hero: some View {
         VStack(spacing: Space.m) {
-            PokeableFace(mood: editing ? .listening : app.mood, look: lookAt, busy: app.agent.running)
+            PokeableFace(mood: editing ? .listening : app.mood, look: lookAt, busy: app.agent.running,
+                         onInteract: { Task { await app.refreshHomeStatus() } })
                 .frame(width: 128, height: 143)
                 .padding(.top, Space.s)
             Text(greeting)
@@ -109,6 +111,12 @@ struct HomeView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Space.xl)
             StatusChips(app: app, board: board, pointer: app.pointer, calibrator: app.calibrator)
+            if app.refreshingStatus {
+                ProgressView("Refreshing status…").font(.footnote)
+            } else if let error = app.statusRefreshError {
+                Text(verbatim: error).font(.footnote).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center).padding(.horizontal, Space.l)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.bottom, Space.s)

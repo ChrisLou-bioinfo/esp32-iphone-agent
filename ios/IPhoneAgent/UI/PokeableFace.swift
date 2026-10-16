@@ -13,6 +13,7 @@ struct PokeableFace: View {
     var mood: Mood
     var look: CGPoint = .zero
     var busy = false
+    var onInteract: (() -> Void)?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var override: Mood?
     @State private var gaze: CGPoint?
@@ -37,7 +38,8 @@ struct PokeableFace: View {
                 .contentShape(Rectangle())
                 .gesture(touch(in: g.size))
         }
-        .accessibilityAction(named: Text("Poke")) { tapped() }
+        .accessibilityAction(named: Text("Poke")) { tapped(); onInteract?() }
+        .accessibilityAction(named: Text("Refresh status")) { onInteract?() }
     }
 
     // MARK: - gesture
@@ -85,6 +87,7 @@ struct PokeableFace: View {
     }
 
     private func ended() {
+        defer { onInteract?() }
         pet?.cancel()
         let held = touchStart.map { Date().timeIntervalSince($0) } ?? 0
         touchStart = nil

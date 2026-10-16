@@ -29,6 +29,7 @@ import Foundation
     var onLinkUp: (() -> Void)?
     var onLinkDown: (() -> Void)?
     private var lastNotify = 0.0  // last notification of any kind, to tell a supervision timeout from a peer drop
+    private var statusRevision = 0
     private var readySince = 0.0
     var log: (String) -> Void = { print($0) }
 
@@ -61,6 +62,38 @@ import Foundation
     var mtu: Int { peripheral.map { $0.maximumWriteValueLength(for: .withoutResponse) + 3 } ?? 0 }
 
     // MARK: - scan / pair
+
+    /// Refresh readiness without forgetting pairing or changing streaming/gesture state.
+    func refreshStatus() async throws {
+        if mock { return }
+        guard state == .poweredOn else {
+            throw DeviceError(message: String(localized: "Turn on Bluetooth to refresh the board status."))
+        }
+        if !connected {
+            if pairedID != nil { reconnect() }
+            else if !scanning { scan() }
+            let deadline = now() + 8
+            while !connected && now() < deadline && (connecting || linking || scanning) {
+                try await Task.sleep(for: .milliseconds(200))
+            }
+        }
+        guard connected, let peripheral, let characteristic = chars[BoardUUID.status] else {
+            let message = !lastError.isEmpty ? lastError : pairedID == nil
+                ? String(localized: "Tap Board to choose a device.")
+                : String(localized: "Still reconnecting. Keep the board nearby.")
+            throw DeviceError(message: message)
+        }
+        let revision = statusRevision
+        peripheral.readValue(for: characteristic)
+        peripheral.readRSSI()
+        let deadline = now() + 3
+        while connected && revision == statusRevision && now() < deadline {
+            try await Task.sleep(for: .milliseconds(100))
+        }
+        guard connected, statusRevision != revision else {
+            throw DeviceError(message: String(localized: "No fresh board status received. Try again."))
+        }
+    }
 
     func scan() {
         guard state == .poweredOn, !mock, !connected, !connecting, !linking else { return }
@@ -467,6 +500,7 @@ extension BoardLink: CBPeripheralDelegate {
             case BoardUUID.status:
                 if let s = BoardStatus.decode(v) {
                     let merged = status?.merged(with: s) ?? s
+                    statusRevision += 1
                     status = merged
                     onStatus?(merged)
                 }

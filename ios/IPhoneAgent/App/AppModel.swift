@@ -25,6 +25,9 @@ import UIKit
     let pointer: Pointer
     let agent: AgentLoop
     @Published private(set) var log: [LogLine] = []
+    @Published var refreshingStatus = false
+    @Published var statusRefreshError: String?
+    private var lastStatusRefresh = 0.0
     @Published var modelError: String?
     @Published var modelTestStarted: Date?
     @Published var modelTestSeconds: Double?
@@ -102,6 +105,7 @@ import UIKit
         }
         board.onVideo = { [weak self] in self?.feed.receive($0) }
         board.onStatus = { [weak self] s in
+            self?.statusRefreshError = nil
             self?.feed.mirroring = s.ap == "streaming"
             if let up = s.up { self?.feed.boardClock(ms: up) }
             self?.metrics.status(s)
@@ -234,6 +238,24 @@ import UIKit
     func snapTest() async {
         do { say(String(format: "snap -> decoded in %.0f ms", try await feed.snap())) } catch {
             say("snap: \(error.localizedDescription)")
+        }
+    }
+
+    /// Shared by pull-to-refresh and character interactions; rapid pokes coalesce.
+    func refreshHomeStatus() async {
+        guard !refreshingStatus, now() - lastStatusRefresh > 2 else { return }
+        refreshingStatus = true
+        statusRefreshError = nil
+        defer { refreshingStatus = false; lastStatusRefresh = now(); publishWidget() }
+        do {
+            try await board.refreshStatus()
+            runs.reload()
+            say("Home status refreshed")
+        } catch is CancellationError {
+            return
+        } catch {
+            statusRefreshError = error.localizedDescription
+            say("Home status refresh: \(error.localizedDescription)")
         }
     }
 

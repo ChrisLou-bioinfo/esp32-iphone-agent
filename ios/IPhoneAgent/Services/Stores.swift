@@ -113,6 +113,9 @@ struct Run: Identifiable, Equatable {
     /// From someone else's shared archive: replay only.
     var imported: Bool { RunShare.isImported(folder) }
     var outcome: Outcome { Outcome(last: steps.last?.name, running: false) }
+    func outcome(isActive: Bool) -> Outcome {
+        Outcome(last: steps.last?.name, running: isActive)
+    }
     var cover: URL? { steps.last(where: { $0.frame != nil })?.frame }
     var firstFrame: URL? { steps.first(where: { $0.frame != nil })?.frame }
     var duration: Double? {

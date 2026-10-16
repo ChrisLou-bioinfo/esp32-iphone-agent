@@ -14,6 +14,12 @@ struct IslandStatus: Equatable {
 
     static let compactLimit = 16
 
+    static var pausedInApp: Self {
+        Self(short: String(localized: "Paused"),
+             full: String(localized: "Paused while you're here. Go to the Home Screen and I'll go on."),
+             look: nil, minimal: String(localized: "Wait"))
+    }
+
     static var looking: Self {
         Self(short: String(localized: "Looking…"), full: String(localized: "Looking at the screen…"), look: nil, minimal: String(localized: "Look"))
     }

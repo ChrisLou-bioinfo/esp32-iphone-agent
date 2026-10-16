@@ -204,6 +204,10 @@ extension AppModel {
 
     // MARK: - review
 
+    func outcome(for run: Run) -> Outcome {
+        run.outcome(isActive: run.id == runID && (startingAgent || agent.running))
+    }
+
     /// Opens the review editor for a run (with its intent, if it ran one).
     func openReview(run id: String) {
         runs.reload()

@@ -47,9 +47,14 @@ extension AppModel {
         if ours { away = await leaveApp() }
         if !away {
             homeHint = String(localized: "Paused while you're here. Go to the Home Screen and I'll go on.")
+            live.show(.pausedInApp, mood: .thinking)
             defer { homeHint = nil }
             while !inBackground {
                 try Task.checkCancellation()
+                if !feed.live {
+                    _ = try await agent.waitForScreen()
+                    live.show(.pausedInApp, mood: .thinking)
+                }
                 try await Task.sleep(nanoseconds: 300_000_000)
             }
         }

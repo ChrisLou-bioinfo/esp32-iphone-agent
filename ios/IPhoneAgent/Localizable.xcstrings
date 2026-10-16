@@ -1,6 +1,26 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+  "The run is still active. Return to the Home Screen to continue.": {
+    "localizations": {
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "任务仍在进行中。请返回手机主屏幕以继续。"
+        }
+      }
+    }
+  },
+  "Paused": {
+    "localizations": {
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "已暂停"
+        }
+      }
+    }
+  },
   "The board connection was lost. Move the board closer and keep it powered on, then tap Retry.": {
     "localizations": {
       "zh-Hans": {

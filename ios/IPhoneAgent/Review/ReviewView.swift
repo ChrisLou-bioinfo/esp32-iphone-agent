@@ -6,6 +6,20 @@ import SwiftUI
 struct ReviewView: View {
     @ObservedObject var draft: ReviewDraft
     @ObservedObject var app: AppModel
+    @ObservedObject var agent: AgentLoop
+    @ObservedObject var runs: RunStore
+
+    init(draft: ReviewDraft, app: AppModel) {
+        self.draft = draft
+        self.app = app
+        self.agent = app.agent
+        self.runs = app.runs
+    }
+
+    private var outcome: Outcome? {
+        guard let id = draft.runID, let run = runs.run(id) else { return draft.outcome }
+        return app.outcome(for: run)
+    }
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var index = 0
@@ -30,7 +44,20 @@ struct ReviewView: View {
     var body: some View {
         VStack(spacing: 0) {
             topBar
-            if draft.outcome == .failed {
+            if outcome == .running {
+                VStack(spacing: Space.s) {
+                    ProgressView()
+                    Text(verbatim: app.recovering?.status.full ?? app.homeHint
+                         ?? String(localized: "The run is still active. Return to the Home Screen to continue."))
+                        .font(.subheadline).multilineTextAlignment(.center)
+                    if !app.startingAgent {
+                        Button("Stop", systemImage: "stop.fill") { Task { await app.stopAgent() } }
+                            .buttonStyle(.bordered)
+                    }
+                }
+                .padding(Space.l)
+            }
+            if outcome == .failed {
                 VStack(alignment: .leading, spacing: Space.s) {
                     Label("Could not finish", systemImage: "exclamationmark.triangle")
                         .font(.headline)
@@ -48,7 +75,8 @@ struct ReviewView: View {
                 .padding(.horizontal, Space.xl).padding(.vertical, Space.s)
             }
             if steps.isEmpty {
-                IntentWordsView(draft: draft)
+                if outcome == .running { Spacer() }
+                else { IntentWordsView(draft: draft) }
             } else {
                 if !video.isEmpty {
                     Picker("View", selection: $showVideo) {
@@ -73,7 +101,7 @@ struct ReviewView: View {
             }
         }
         .background(Color(uiColor: .systemBackground).ignoresSafeArea())
-        .safeAreaInset(edge: .bottom) { if !draft.readOnly { bottomBar } }
+        .safeAreaInset(edge: .bottom) { if !draft.readOnly && outcome != .running { bottomBar } }
         .task(id: [playing, showVideo]) { await autoplay() }
         .onChange(of: showVideo) { playing = false }
         .onChange(of: videoTime) { _, t in  // the step follows the video
@@ -139,10 +167,12 @@ struct ReviewView: View {
     @ViewBuilder private var subtitle: some View {
         switch draft.source {
         case .recording: Label("Demonstration · check the yellow steps", systemImage: "record.circle").foregroundStyle(.secondary)
-        case .intent: Label("Intent", systemImage: draft.icon).foregroundStyle(.secondary)
+        case .intent:
+            if let o = outcome { OutcomeLabel(outcome: o) }
+            else { Label("Intent", systemImage: draft.icon).foregroundStyle(.secondary) }
         case .run:
             if draft.readOnly { Label("Imported", systemImage: "square.and.arrow.down").foregroundStyle(.secondary) }
-            else if let o = draft.outcome { OutcomeLabel(outcome: o) }
+            else if let o = outcome { OutcomeLabel(outcome: o) }
         }
     }
 
@@ -318,7 +348,7 @@ struct ReviewView: View {
     private var bottomBar: some View {
         BottomBar {
             VStack(spacing: Space.s) {
-                if draft.runID != nil, draft.outcome == .failed {
+                if draft.runID != nil, outcome == .failed || outcome == .stopped {
                     Button("Retry", systemImage: "arrow.clockwise", action: retryRun)
                         .buttonStyle(BigButton())
                         .disabled(retrying || app.startingAgent || app.agent.running || app.recorder.recording)

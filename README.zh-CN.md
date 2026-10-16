@@ -25,6 +25,10 @@
 
 *"设置早上 8:00 的闹钟，每周一和周二重复，然后保存"*：Agent 退出自己的 App，打开时钟，在滚轮里输入时间，勾选日期并保存。（照片拍自 v0.1.0，任务相同。）
 
+<p align="center"><img src="docs/images/app-screens.png" alt="ESP32 Agent app: real phone vs. what the agent sees, and pointer calibration" width="70%"></p>
+
+*左：真机；右：Agent 通过板子的 AirPlay 镜像看到的画面。第二张是指针校准。*
+
 ## 工作原理
 
 ```
@@ -105,10 +109,10 @@ server/     旧版 v0.1.0 的电脑端服务，新版不使用（见 server/READ
 ## 路线图
 
 - [x] 去掉电脑：板子负责镜像和点击，手机上的 App 负责思考
-- [ ] App Store / TestFlight 版本（用 HID Home 键退出 App，替换私有 API）
 - [ ] 横屏 App（坐标和校准目前按竖屏）
 - [ ] 非 ASCII 输入（比如用 iOS 拼音键盘输入中文）
 - [ ] 更快：一次模型调用多个动作，只在需要时校正指针
+- [ ] 在 iOS App 内整理一份效果最好的模型推荐列表（[@asharthinks 的建议](https://x.com/asharthinks/status/2110740775030125019)）
 
 ## 限制
 

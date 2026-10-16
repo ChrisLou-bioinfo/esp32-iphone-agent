@@ -7,3 +7,5 @@ Pulling down the Agent list or releasing a tap/drag on its character refreshes r
 Refresh reads fresh board status and signal strength, reconnecting to the remembered board when needed. It preserves pairing, shows progress and actionable failures, and clears stale failure text when fresh status arrives. Model readiness remains the existing local validation state; this gesture does not run a model inference test.
 
 Validation: signed iOS device build succeeded; whitespace checks passed. Installation was attempted, but CoreDevice reported the user's iPhone unavailable. Physical gesture behavior and installation remain unverified for this change.
+
+Follow-up: the phone reconnected and the refresh build was installed and launched successfully. The next UI revision starts from `c995e41`, with only untracked `ios/fastlane/` in the source checkout. It removes the visible refresh label and uses the native top spinner for pull-to-refresh and a top-aligned, unlabeled spinner for character-triggered refresh. The custom spinner is hidden during native refresh to avoid duplicate indicators; VoiceOver retains a descriptive accessibility label.

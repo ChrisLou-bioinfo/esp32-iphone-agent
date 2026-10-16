@@ -17,6 +17,7 @@ struct HomeView: View {
     @State private var intentName = ""
     @FocusState private var editing: Bool
     @State private var renaming = false
+    @State private var pullingToRefresh = false
 
     var body: some View {
         NavigationStack {
@@ -34,7 +35,19 @@ struct HomeView: View {
                 intentSection
             }
             .listStyle(.insetGrouped)
-            .refreshable { await app.refreshHomeStatus() }
+            .refreshable {
+                pullingToRefresh = true
+                defer { pullingToRefresh = false }
+                await app.refreshHomeStatus()
+            }
+            .overlay(alignment: .top) {
+                if app.refreshingStatus && !pullingToRefresh {
+                    ProgressView()
+                        .accessibilityLabel(Text("Refreshing status…"))
+                        .padding(.top, Space.s)
+                        .allowsHitTesting(false)
+                }
+            }
             .scrollDismissesKeyboard(.interactively)
             .navigationTitle(Text(verbatim: settings.agentName))
             .navigationBarTitleDisplayMode(.inline)
@@ -111,9 +124,7 @@ struct HomeView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Space.xl)
             StatusChips(app: app, board: board, pointer: app.pointer, calibrator: app.calibrator)
-            if app.refreshingStatus {
-                ProgressView("Refreshing status…").font(.footnote)
-            } else if let error = app.statusRefreshError {
+            if !app.refreshingStatus, let error = app.statusRefreshError {
                 Text(verbatim: error).font(.footnote).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center).padding(.horizontal, Space.l)
             }

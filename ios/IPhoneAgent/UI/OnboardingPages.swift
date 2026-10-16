@@ -246,6 +246,7 @@ struct BrainPage: View {
             } else {
                 ModelFieldsPanel(settings: settings)
             }
+            ModelTestTimingView(app: app)
             switch app.modelOK {
             case true?:
                 Panel {

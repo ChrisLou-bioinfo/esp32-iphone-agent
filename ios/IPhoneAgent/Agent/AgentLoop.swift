@@ -58,7 +58,7 @@ extension Pointer: Gestures {}
     var onStep: (() -> Void)?
     /// What the agent is busy with between steps, for the Dynamic Island (looking, thinking, about to act).
     var onDoing: ((Doing) -> Void)?
-    enum Doing { case looking, thinking, acting(JObject) }
+    enum Doing { case looking, thinking, retrying, acting(JObject) }
     /// Hints from a saved intent's checklist, appended to the actor's system prompt (empty = the original prompt).
     var hints: [String] = []
     /// "Needs your help": asked when the actor gives up or errors repeat; nil = end the run as before.
@@ -135,7 +135,7 @@ extension Pointer: Gestures {}
     }
 
     private func ask(_ role: String, _ llm: ChatModel, _ system: String, _ prompt: String,
-                     temperature: Double = 0) async throws -> (String, Double, Data?) {
+                     temperature: Double = 0, retryTimeout: Bool = true) async throws -> (String, Double, Data?) {
         try await gate?()
         var prompt = prompt
         if let lost = try await waitForScreen() {
@@ -145,9 +145,19 @@ extension Pointer: Gestures {}
         }
         guard let screen, screen.live else { throw BlindError() }  // never let the model act blind
         let frame = screen.frame, started = now()
-        onDoing?(.thinking)
-        let reply = try await llm.chat(system: system, text: prompt, image: frame, maxTokens: Self.maxTokens[role] ?? 1000,
-                                       temperature: temperature)
+        onDoing?(retryTimeout ? .thinking : .retrying)
+        let reply: ChatResult
+        do {
+            reply = try await llm.chat(system: system, text: prompt, image: frame,
+                                       maxTokens: Self.maxTokens[role] ?? 1000, temperature: temperature)
+        } catch {
+            guard retryTimeout, ModelRequestFailure.isTimeout(error), !Task.isCancelled else { throw error }
+            DebugLog.write("model request timed out (\(role)); retrying once with a fresh screen")
+            onDoing?(.retrying)
+            try await Task.sleep(for: .seconds(2))
+            // Re-enter the gate and screen checks before retrying; no gesture is repeated.
+            return try await ask(role, llm, system, prompt, temperature: temperature, retryTimeout: false)
+        }
         let seconds = ((now() - started) * 100).rounded() / 100
         metrics?.llm(first: reply.firstToken, total: reply.total)
         var rec: JObject = ["role": .str(role), "model": .str(llm.model), "prompt": .str(prompt),
@@ -191,7 +201,7 @@ extension Pointer: Gestures {}
         } catch let e as BlindError {
             record(nil, ["action": .str("fail"), "reason": .str(e.reason)])
         } catch {  // e.g. the planner itself is unreachable
-            record(nil, ["action": .str("error"), "reason": .str(String(describing: error))])
+            record(nil, ["action": .str("error"), "reason": .str(ModelRequestFailure.message(error))])
         }
         finish()
     }

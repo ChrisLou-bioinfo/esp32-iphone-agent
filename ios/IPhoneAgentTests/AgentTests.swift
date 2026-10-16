@@ -3,6 +3,29 @@ import XCTest
 
 /// Port of server/tests/test_agent.py.
 @MainActor final class AgentTests: XCTestCase {
+    func testPlannerTimeoutRetriesOnceAndChecksGateAgain() async throws {
+        let model = TimeoutModel(failures: 1)
+        let agent = AgentLoop(phone: nil, screen: FakeScreen(), actor: model, planner: model, trace: nil)
+        var gates = 0
+        var retryShown = false
+        agent.gate = { gates += 1 }
+        agent.onDoing = { if case .retrying = $0 { retryShown = true } }
+        try await agent.replan()
+        XCTAssertEqual(model.calls, 2)
+        XCTAssertEqual(gates, 2)
+        XCTAssertTrue(retryShown)
+        XCTAssertEqual(agent.plan, "1. Observe the screen")
+    }
+
+    func testPlannerTimeoutStopsAfterOneRetry() async {
+        let model = TimeoutModel(failures: 10)
+        let agent = AgentLoop(phone: nil, screen: FakeScreen(), actor: model, planner: model, trace: nil)
+        do { try await agent.replan(); XCTFail("Expected timeout") }
+        catch { XCTAssertTrue(ModelRequestFailure.isTimeout(error)) }
+        XCTAssertEqual(model.calls, 2)
+        XCTAssertTrue(agent.steps.isEmpty)
+    }
+
     func testParseSingleAction() throws {
         let acts = try Actions.parseActions("THINK: The Search pill is visible, so I tap it.\nDO: tap 500 814")
         XCTAssertEqual(acts, [["thought": .str("The Search pill is visible, so I tap it."), "thought_zh": .str(""),
@@ -170,4 +193,16 @@ import XCTest
     func goHome() async throws { calls.append("home") }
     func goBack() async throws { calls.append("back") }
     func reset() async throws { calls.append("reset") }
+}
+
+@MainActor private final class TimeoutModel: ChatModel {
+    let model = "timeout-test"
+    let failures: Int
+    var calls = 0
+    init(failures: Int) { self.failures = failures }
+    func chat(system: String, text: String, image: Data?, maxTokens: Int, temperature: Double) async throws -> ChatResult {
+        calls += 1
+        if calls <= failures { throw URLError(.timedOut) }
+        return ChatResult(text: "1. Observe the screen", total: 0)
+    }
 }

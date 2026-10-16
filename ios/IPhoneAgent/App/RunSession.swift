@@ -138,6 +138,7 @@ extension AppModel {
         switch d {
         case .looking: live.show(.looking, mood: .thinking)
         case .thinking: live.show(.thinking, mood: .thinking)
+        case .retrying: live.show(.retrying, mood: .thinking)
         case .acting(let act): live.show(.acting(act), mood: .acting)
         }
     }

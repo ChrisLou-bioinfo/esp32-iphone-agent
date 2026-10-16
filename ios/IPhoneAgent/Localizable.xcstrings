@@ -5187,6 +5187,166 @@
           }
         }
       }
+    },
+    "Waiting for the model…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在等待模型…"
+          }
+        }
+      }
+    },
+    "Total request time" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请求总耗时"
+          }
+        }
+      }
+    },
+    "Server response" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务端响应"
+          }
+        }
+      }
+    },
+    "First answer token" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "首个答案 token"
+          }
+        }
+      }
+    },
+    "Includes network and model processing time." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "包含网络传输和模型处理时间。"
+          }
+        }
+      }
+    },
+    "The model request timed out before it finished. Try again or choose a specific vision model instead of automatic routing." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型请求尚未完成便已超时。请重试，或选择具体的视觉模型而非自动路由。"
+          }
+        }
+      }
+    },
+    "Retrying…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在重试…"
+          }
+        }
+      }
+    },
+    "The model timed out. Trying once more…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型超时了，正在再试一次…"
+          }
+        }
+      }
+    },
+    "Swiping right" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向右滑动"
+          }
+        }
+      }
+    },
+    "Swiping left" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向左滑动"
+          }
+        }
+      }
+    },
+    "Swiping down" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向下滑动"
+          }
+        }
+      }
+    },
+    "Swiping up" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向上滑动"
+          }
+        }
+      }
+    },
+    "Think" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "思考"
+          }
+        }
+      }
+    },
+    "Act" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作"
+          }
+        }
+      }
+    },
+    "End" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "结束"
+          }
+        }
+      }
+    },
+    "Waiting time" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等待时长"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

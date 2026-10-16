@@ -21,6 +21,10 @@ struct IslandStatus: Equatable {
         Self(short: String(localized: "Thinking…"), full: String(localized: "Thinking…"), look: nil)
     }
 
+    static var retrying: Self {
+        Self(short: String(localized: "Retrying…"), full: String(localized: "The model timed out. Trying once more…"), look: nil)
+    }
+
     static var help: Self {
         Self(short: String(localized: "Need help"), full: String(localized: "Need your help"), look: .zero)
     }
@@ -54,7 +58,13 @@ struct IslandStatus: Equatable {
         case "key":
             return say({ String(localized: "Pressing \($0)") }, String(localized: "Pressing a key…"), act["combo"]?.str)
         case "swipe":
-            return Self(short: String(localized: "Swiping…"), full: String(localized: "Swiping…"), look: look)
+            let label: String
+            if abs(look.x) > abs(look.y) {
+                label = look.x > 0 ? String(localized: "Swiping right") : String(localized: "Swiping left")
+            } else {
+                label = look.y > 0 ? String(localized: "Swiping down") : String(localized: "Swiping up")
+            }
+            return Self(short: label, full: label, look: look)
         case "path", "circle":
             return Self(short: String(localized: "Drawing…"), full: String(localized: "Drawing…"), look: look)
         case "home":
@@ -69,6 +79,12 @@ struct IslandStatus: Equatable {
     /// Where the pointer is going, relative to the screen center; typing looks down at the keyboard.
     static func gaze(_ act: JObject) -> CGPoint {
         if ["type", "key"].contains(act["action"]?.str ?? "") { return CGPoint(x: 0, y: 0.7) }
+        if act["action"]?.str == "swipe" {
+            let dx = (act["x2"]?.double ?? 0) - (act["x1"]?.double ?? 0)
+            let dy = (act["y2"]?.double ?? 0) - (act["y1"]?.double ?? 0)
+            let magnitude = max(abs(dx), abs(dy), 1)
+            return CGPoint(x: dx / magnitude, y: dy / magnitude)
+        }
         guard let p = pointerPath(act).last else { return .zero }
         func clamp(_ v: Double) -> Double { min(1, max(-1, (v - 0.5) * 2)) }
         return CGPoint(x: clamp(p.x), y: clamp(p.y))

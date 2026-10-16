@@ -31,6 +31,7 @@ struct ModelSettingsView: View {
                     }
                 }
                 .disabled(testing || !app.modelReady)
+                ModelTestTimingView(app: app)
                 if let error = app.modelError {
                     Text(verbatim: error).font(.footnote).foregroundStyle(Palette.stop)
                 }

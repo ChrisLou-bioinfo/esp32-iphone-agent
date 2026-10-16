@@ -97,6 +97,7 @@
 		D5D197473F9BD99FD38F6231 /* AppShortcuts.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 6EC7C29EBD2DA1A602B0BED2 /* AppShortcuts.xcstrings */; };
 		DD9700301BED070734BD4F87 /* TraceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 226739C44752297294C75671 /* TraceStore.swift */; };
 		DDC8DB5DA64D75338F3A52DF /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43A1CAA88BC5B551B872615F /* AppModel.swift */; };
+		E663D7886455DD700AF2469A /* ModelTestTimingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDF50CDAB7D18F16B8D2299C /* ModelTestTimingView.swift */; };
 		E86B4A3177FC9F0A5D846C2F /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDB8774D34E5E3FEF5C7A1E6 /* Settings.swift */; };
 		E8FA336F818FBAB651C32BEE /* AgentActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B155ADD97189D634A809EDE9 /* AgentActivity.swift */; };
 		EF83C4DFA24497FDB0BF123E /* mock-frame.jpg in Resources */ = {isa = PBXBuildFile; fileRef = F0918D2C621FD17EDD51AF5E /* mock-frame.jpg */; };
@@ -106,6 +107,7 @@
 		F3DE9777E0FAD414E17465BC /* VideoAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD4270DF66937405FC86B145 /* VideoAssembler.swift */; };
 		F6301B26DAF28C96D09F6D8E /* RunShare.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B84B4F1C81E697ACB30630 /* RunShare.swift */; };
 		F77EB884A6AE61AC290911D9 /* AssistiveTouchSpots.swift in Sources */ = {isa = PBXBuildFile; fileRef = D317C60AA727B6A20A589DAC /* AssistiveTouchSpots.swift */; };
+		FC0BD528A254726D869FDF5B /* ModelRequestFailure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96A8E3AF04195B586F10EDC4 /* ModelRequestFailure.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -199,6 +201,7 @@
 		915FC0D291F09BE0A0439D9C /* RunsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunsView.swift; sourceTree = "<group>"; };
 		9419B84DE8B4B7CD816AF19B /* ReviewSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewSheets.swift; sourceTree = "<group>"; };
 		953BF9D5FB798BA1F3CEC832 /* IPhoneAgentApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPhoneAgentApp.swift; sourceTree = "<group>"; };
+		96A8E3AF04195B586F10EDC4 /* ModelRequestFailure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelRequestFailure.swift; sourceTree = "<group>"; };
 		96BDA430E0C54DC956DE9366 /* StatusChips.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusChips.swift; sourceTree = "<group>"; };
 		98111895572CDFBCBA4C5268 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
 		98425438C4A7C1EB827CDD2C /* IPhoneAgent.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = IPhoneAgent.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -237,6 +240,7 @@
 		E7721FA5F1DD53610AD0B737 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		E948F0EBC262C7ABF8E413E5 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		EDB8774D34E5E3FEF5C7A1E6 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
+		EDF50CDAB7D18F16B8D2299C /* ModelTestTimingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelTestTimingView.swift; sourceTree = "<group>"; };
 		F071F3E4D7B82DE70AE75A81 /* LLMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMTests.swift; sourceTree = "<group>"; };
 		F0918D2C621FD17EDD51AF5E /* mock-frame.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "mock-frame.jpg"; sourceTree = "<group>"; };
 		F775C2B833B33E951A629957 /* PromptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptTests.swift; sourceTree = "<group>"; };
@@ -336,6 +340,7 @@
 				24E3598C8B1D1025A419CE5D /* ModelPicker.swift */,
 				C2BE9FDCCB259EC7A7E259E4 /* ModelSelectionView.swift */,
 				3B94481DB51BD93A2900698F /* ModelSettingsView.swift */,
+				EDF50CDAB7D18F16B8D2299C /* ModelTestTimingView.swift */,
 				D17A722B1C48BF8FBF8B4222 /* OnboardingDemos.swift */,
 				22464AAA35416D0351B8063C /* OnboardingPages.swift */,
 				99381FBF82EA7EB76556866E /* OnboardingView.swift */,
@@ -414,6 +419,7 @@
 				B9719A5EC1DD7C5033CC8DF5 /* Metrics.swift */,
 				DAEFE87504F77098EF0AEFFC /* ModelConnectionCheck.swift */,
 				D8A02583BE955659071F3172 /* ModelProvider.swift */,
+				96A8E3AF04195B586F10EDC4 /* ModelRequestFailure.swift */,
 				05DA6345A40715C8BD2AED6C /* Notifier.swift */,
 				541D1A2837E5F270700EAF55 /* Redactor.swift */,
 				B1B84B4F1C81E697ACB30630 /* RunShare.swift */,
@@ -665,8 +671,10 @@
 				1032BD2A5C93F44527463EC7 /* ModelConnectionCheck.swift in Sources */,
 				2CF0D6C8101BF02E0EDF44E2 /* ModelPicker.swift in Sources */,
 				A5A78F1B4D15D843B8932932 /* ModelProvider.swift in Sources */,
+				FC0BD528A254726D869FDF5B /* ModelRequestFailure.swift in Sources */,
 				38112BBE7634E2E538DBA9D0 /* ModelSelectionView.swift in Sources */,
 				7F412478410DC75BC26A0D5C /* ModelSettingsView.swift in Sources */,
+				E663D7886455DD700AF2469A /* ModelTestTimingView.swift in Sources */,
 				4CA70811574C401EB0012355 /* Notifier.swift in Sources */,
 				CFDC07BA9E09D3446164B1B9 /* OnboardingDemos.swift in Sources */,
 				189667BD260B5751915C28AF /* OnboardingPages.swift in Sources */,

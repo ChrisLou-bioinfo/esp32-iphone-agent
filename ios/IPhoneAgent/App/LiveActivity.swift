@@ -75,6 +75,7 @@ import Foundation
             if state.phase != .recording { apply(.ended(outcome.mood), to: &state) }
         }
         state.finished = true
+        state.waitingSince = nil
         DebugLog.write("Live Activity: ended" + (outcome.map { " (\($0.mood.rawValue))" } ?? ""))
         self.activity = nil
         last = nil
@@ -88,6 +89,9 @@ import Foundation
     // MARK: - status and eyes
 
     private func apply(_ status: IslandStatus, to state: inout State) {
+        if status.waits {
+            if state.label != status.short || state.waitingSince == nil { state.waitingSince = Date() }
+        } else { state.waitingSince = nil }
         state.label = status.short
         state.labelFull = status.full
         if let look = status.look {

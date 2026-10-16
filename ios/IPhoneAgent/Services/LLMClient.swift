@@ -8,6 +8,7 @@ struct ChatResult {
     var usage: [String: Int] = [:]  // prompt_tokens, completion_tokens, … when the server sends them
     var reasoningChars = 0          // reasoning_content the model wrote (not part of `text`)
     var rawChars = 0                // content before trimming
+    var responseSeconds: Double?  // time to HTTP headers, including server queue time
     var retried = false             // the first reply was empty
 
     /// For the trace and the debug log: why a reply came back empty or cut.
@@ -158,6 +159,7 @@ struct LLMError: LocalizedError {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (bytes, response) = try await session.bytes(for: request)
+        let responseSeconds = now() - started
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         let type = (response as? HTTPURLResponse)?.value(forHTTPHeaderField: "Content-Type") ?? ""
         DebugLog.write(String(format: "llm   headers: HTTP %d %@ after %.1f s", status, type, now() - started))
@@ -169,9 +171,12 @@ struct LLMError: LocalizedError {
         if !type.contains("text/event-stream") {  // a plain JSON answer
             var raw = Data()
             for try await b in bytes { raw.append(b) }
-            return (status, try Self.message(raw), "")
+            var result = try Self.message(raw)
+            result.responseSeconds = responseSeconds
+            return (status, result, "")
         }
         var result = ChatResult(text: "", firstToken: nil, total: 0)
+        result.responseSeconds = responseSeconds
         for try await line in bytes.lines {
             guard line.hasPrefix("data:") else { continue }
             let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)

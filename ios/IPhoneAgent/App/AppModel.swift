@@ -26,6 +26,10 @@ import UIKit
     let agent: AgentLoop
     @Published private(set) var log: [LogLine] = []
     @Published var modelError: String?
+    @Published var modelTestStarted: Date?
+    @Published var modelTestSeconds: Double?
+    @Published var modelFirstTokenSeconds: Double?
+    @Published var modelResponseSeconds: Double?
     @Published var modelOK: Bool?  // last LLM ping result
     @Published var hotspotSSID: String?
     @Published var otherWiFi: String?  // the phone is on this network, not the board's
@@ -92,6 +96,9 @@ import UIKit
         settingsSink = settings.$configurationRevision.dropFirst().sink { [weak self] _ in
             self?.modelOK = nil
             self?.modelError = nil
+            self?.modelTestSeconds = nil
+            self?.modelFirstTokenSeconds = nil
+            self?.modelResponseSeconds = nil
         }
         board.onVideo = { [weak self] in self?.feed.receive($0) }
         board.onStatus = { [weak self] s in
@@ -231,6 +238,7 @@ import UIKit
     }
 
     func pingLLM() async {
+        guard modelTestStarted == nil else { return }
         if MockMode.on {
             try? await Task.sleep(nanoseconds: 900_000_000)
             modelOK = true
@@ -239,6 +247,15 @@ import UIKit
         let started = now()
         let revision = settings.configurationRevision
         modelError = nil
+        modelOK = nil
+        modelTestSeconds = nil
+        modelFirstTokenSeconds = nil
+        modelResponseSeconds = nil
+        modelTestStarted = Date()
+        defer {
+            modelTestStarted = nil
+            if revision == settings.configurationRevision { modelTestSeconds = now() - started }
+        }
         do {
             let client = try await settings.client("actor")
             let image = UIGraphicsImageRenderer(size: CGSize(width: 64, height: 64)).image { context in
@@ -248,6 +265,8 @@ import UIKit
             let r = try await client.chat(system: "Name the dominant color in the image. Reply with one English word.",
                                           text: "What color is this image?", image: image, maxTokens: 600, temperature: 0)
             guard revision == settings.configurationRevision else { return }
+            modelFirstTokenSeconds = r.firstToken
+            modelResponseSeconds = r.responseSeconds
             try ModelConnectionCheck.validate(r)
             metrics.llmPingMs = (now() - started) * 1000
             metrics.llm(first: r.firstToken, total: r.total)
@@ -256,7 +275,7 @@ import UIKit
         } catch {
             guard revision == settings.configurationRevision else { return }
             modelOK = false
-            modelError = error.localizedDescription
+            modelError = ModelRequestFailure.message(error)
             say("LLM: \(error.localizedDescription)")
         }
     }

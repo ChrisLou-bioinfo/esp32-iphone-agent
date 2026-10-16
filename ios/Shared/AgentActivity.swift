@@ -17,6 +17,7 @@ struct AgentActivityAttributes: ActivityAttributes {
         var since = Date()  // recording start, for the timer
         var label = ""      // what the character says, compact island ("Thinking…", "Tapping Clock")
         var labelFull = ""  // the same, longer, for the expanded island and the Lock Screen
+        var waitingSince: Date?  // system-rendered elapsed timer, even between app updates
         var lookX = 0.0     // where the eyes look, -1...1 (darting while it waits, toward the pointer's target)
         var lookY = 0.0
 

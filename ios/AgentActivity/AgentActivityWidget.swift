@@ -37,6 +37,10 @@ struct AgentLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(alignment: .leading, spacing: 8) {
                         Says(state: s, full: true).font(.subheadline.weight(.semibold))
+                        if let since = s.waitingSince, !s.finished {
+                            Text(since, style: .timer).monospacedDigit().font(.footnote)
+                                .accessibilityLabel("Waiting time")
+                        }
                         if s.line != s.labelFull {
                             Text(verbatim: s.line).font(.footnote).foregroundStyle(.secondary).lineLimit(2)
                         }
@@ -56,13 +60,19 @@ struct AgentLiveActivity: Widget {
                 if s.phase == .recording && !s.finished {
                     Counter(state: s).font(.caption).frame(maxWidth: 44)
                 } else {
-                    Says(state: s, full: false).font(.caption2.weight(.semibold)).frame(maxWidth: 92, alignment: .trailing)
+                    Says(state: s, full: false).font(.caption.bold()).frame(maxWidth: 92, alignment: .trailing)
                 }
             } minimal: {
                 if s.phase == .recording {
                     Image(systemName: "record.circle.fill").foregroundStyle(.red)
                 } else {
-                    Eyes(state: s).frame(width: 22, height: 22)
+                    VStack(spacing: 0) {
+                        Eyes(state: s).frame(width: 16, height: 16)
+                        Text(s.mood == .thinking ? "Think" : s.mood == .acting ? "Act" : s.finished ? "End" : "Wait")
+                            .font(.caption2).foregroundStyle(.white).lineLimit(1)
+                    }
+                    .frame(width: 36)
+                    .accessibilityLabel(Text(verbatim: s.labelFull))
                 }
             }
             .widgetURL(AgentActivityAttributes.url(run: context.attributes.runID))
@@ -113,10 +123,11 @@ private struct Buttons: View {
 /// between two updates springs: the app sends a new gaze every ~2 s while it waits (darting eyes) and the
 /// gesture's target before the pointer moves.
 private struct Eyes: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let state: AgentActivityAttributes.ContentState
     var body: some View {
         AgentFace(mood: state.mood, look: state.look, lookRange: 2.4, animated: false, showsTab: false)
-            .animation(.spring(response: 0.3, dampingFraction: 0.65), value: state.look)
+            .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.65), value: state.look)
     }
 }
 

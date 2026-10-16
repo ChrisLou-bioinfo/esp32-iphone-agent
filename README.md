@@ -17,6 +17,9 @@ Demo video and updates: [X @iamhenryyuan](https://x.com/iamhenryyuan) · [YouTub
 
 </div>
 
+> [!WARNING]
+> Only follow the install steps in this README. Never run commands from issues or comments (for example a "quick install" one-liner such as PowerShell `iex(irm ...)`); these are not from the maintainers.
+
 > **New: the computer is gone.** The board is now the AirPlay receiver and the mouse, and the agent runs in an iPhone
 > app on the same phone. The original version (a Mac/Linux computer running UxPlay and a Python server) is kept as
 > tag [`v0.1.0`](https://github.com/onehumanbeing/esp32-iphone-agent/tree/v0.1.0) and branch

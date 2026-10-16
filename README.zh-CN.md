@@ -17,6 +17,9 @@
 
 </div>
 
+> [!WARNING]
+> 请只按本 README 的步骤安装。不要运行 issue 或评论里的命令（例如 PowerShell 的 `iex(irm ...)` 之类“快速安装”一行命令），这些都不是维护者发的。
+
 > **新版：电脑去掉了。** 板子自己当 AirPlay 接收端和鼠标，Agent 跑在同一台 iPhone 上的 App 里。
 > 旧版（Mac/Linux 电脑跑 UxPlay + Python 服务端）保留在 tag [`v0.1.0`](https://github.com/onehumanbeing/esp32-iphone-agent/tree/v0.1.0)
 > 和分支 [`legacy`](https://github.com/onehumanbeing/esp32-iphone-agent/tree/legacy)，见 [docs/legacy.md](docs/legacy.md)。

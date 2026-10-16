@@ -37,7 +37,11 @@ struct AgentLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(alignment: .leading, spacing: 8) {
                         Says(state: s, full: true).font(.subheadline.weight(.semibold))
-                        if s.line != s.labelFull {
+                        if let since = s.waitingSince, !s.finished {
+                            Text(since, style: .timer).monospacedDigit().font(.footnote)
+                                .accessibilityLabel("Waiting time")
+                        }
+                        if s.line != s.labelFull && (s.phase != .running || s.finished) {
                             Text(verbatim: s.line).font(.footnote).foregroundStyle(.secondary).lineLimit(2)
                         }
                         if s.phase == .running {
@@ -56,13 +60,21 @@ struct AgentLiveActivity: Widget {
                 if s.phase == .recording && !s.finished {
                     Counter(state: s).font(.caption).frame(maxWidth: 44)
                 } else {
-                    Says(state: s, full: false).font(.caption2.weight(.semibold)).frame(maxWidth: 92, alignment: .trailing)
+                    Says(state: s, full: false).font(.caption.bold()).frame(maxWidth: 92, alignment: .trailing)
                 }
             } minimal: {
                 if s.phase == .recording {
                     Image(systemName: "record.circle.fill").foregroundStyle(.red)
                 } else {
-                    Eyes(state: s).frame(width: 22, height: 22)
+                    // Minimal presentation is the primary surface while Screen Mirroring is active.
+                    // Keep it text-only: the former face-over-label layout was too small to read,
+                    // and idle gaze updates caused distracting system refresh transitions.
+                    // Eyes remains below for compact/expanded presentations and future reuse.
+                    Text(verbatim: s.minimalLabel ?? s.label)
+                        .font(.caption2.bold()).foregroundStyle(.white)
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                        .frame(width: 36, height: 24)
+                        .accessibilityLabel(Text(verbatim: s.labelFull))
                 }
             }
             .widgetURL(AgentActivityAttributes.url(run: context.attributes.runID))
@@ -110,13 +122,14 @@ private struct Buttons: View {
 }
 
 /// The character's face without the USB tab. Widgets do not animate on their own, but a change of `look`
-/// between two updates springs: the app sends a new gaze every ~2 s while it waits (darting eyes) and the
-/// gesture's target before the pointer moves.
+/// between action updates springs toward the gesture's target before the pointer moves.
+/// Random idle gaze updates are disabled for the text-only minimal presentation.
 private struct Eyes: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let state: AgentActivityAttributes.ContentState
     var body: some View {
         AgentFace(mood: state.mood, look: state.look, lookRange: 2.4, animated: false, showsTab: false)
-            .animation(.spring(response: 0.3, dampingFraction: 0.65), value: state.look)
+            .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.65), value: state.look)
     }
 }
 
@@ -164,7 +177,9 @@ private struct LockScreenView: View {
                 if !s.finished && !s.labelFull.isEmpty {
                     Says(state: s, full: true).font(.subheadline.weight(.semibold))
                 }
-                Text(verbatim: s.line).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                if s.phase != .running || s.finished {
+                    Text(verbatim: s.line).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                }
                 if s.finished {
                     Label(s.mood == .success ? "Done · tap to review" : "Ended · tap to review",
                           systemImage: s.mood == .success ? "checkmark.circle.fill" : "play.circle")

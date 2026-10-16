@@ -3,6 +3,13 @@ import XCTest
 
 /// Runs read back from trace folders (what the Runs list and the replay player show), and saved intents.
 @MainActor final class StoreTests: XCTestCase {
+    func testEmptyActiveRunIsNotFailedButAbandonedRunIs() {
+        let run = Run(id: "pending", folder: URL(fileURLWithPath: "/tmp/pending"),
+                      task: "Open Notes", date: Date(), steps: [])
+        XCTAssertEqual(run.outcome(isActive: true), .running)
+        XCTAssertEqual(run.outcome(isActive: false), .failed)
+    }
+
     func testRunIsReadBackWithFramesOutcomeAndDuration() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let traces = TraceStore(root: root)

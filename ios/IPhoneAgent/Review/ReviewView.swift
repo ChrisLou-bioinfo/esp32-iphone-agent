@@ -6,6 +6,20 @@ import SwiftUI
 struct ReviewView: View {
     @ObservedObject var draft: ReviewDraft
     @ObservedObject var app: AppModel
+    @ObservedObject var agent: AgentLoop
+    @ObservedObject var runs: RunStore
+
+    init(draft: ReviewDraft, app: AppModel) {
+        self.draft = draft
+        self.app = app
+        self.agent = app.agent
+        self.runs = app.runs
+    }
+
+    private var outcome: Outcome? {
+        guard let id = draft.runID, let run = runs.run(id) else { return draft.outcome }
+        return app.outcome(for: run)
+    }
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var index = 0
@@ -20,6 +34,8 @@ struct ReviewView: View {
     @State private var saving = false
     @State private var optimizing = false
     @State private var shareURL: URL?
+    @State private var retrying = false
+    @State private var retryError: String?
 
     private var steps: [DraftStep] { draft.steps }
     private var step: DraftStep? { steps.indices.contains(index) ? steps[index] : nil }
@@ -28,8 +44,39 @@ struct ReviewView: View {
     var body: some View {
         VStack(spacing: 0) {
             topBar
+            if outcome == .running {
+                VStack(spacing: Space.s) {
+                    ProgressView()
+                    Text(verbatim: app.recovering?.status.full ?? app.homeHint
+                         ?? String(localized: "The run is still active. Return to the Home Screen to continue."))
+                        .font(.subheadline).multilineTextAlignment(.center)
+                    if !app.startingAgent {
+                        Button("Stop", systemImage: "stop.fill") { Task { await app.stopAgent() } }
+                            .buttonStyle(.bordered)
+                    }
+                }
+                .padding(Space.l)
+            }
+            if outcome == .failed {
+                VStack(alignment: .leading, spacing: Space.s) {
+                    Label("Could not finish", systemImage: "exclamationmark.triangle")
+                        .font(.headline)
+                    Text(verbatim: failureMessage).font(.subheadline)
+                    if failureMessage != failureReason {
+                        DisclosureGroup("Error details") {
+                            Text(verbatim: failureReason).font(.caption).textSelection(.enabled)
+                        }
+                    }
+                    if let retryError {
+                        Text(verbatim: retryError).font(.subheadline).foregroundStyle(Palette.stop)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, Space.xl).padding(.vertical, Space.s)
+            }
             if steps.isEmpty {
-                IntentWordsView(draft: draft)
+                if outcome == .running { Spacer() }
+                else { IntentWordsView(draft: draft) }
             } else {
                 if !video.isEmpty {
                     Picker("View", selection: $showVideo) {
@@ -54,7 +101,7 @@ struct ReviewView: View {
             }
         }
         .background(Color(uiColor: .systemBackground).ignoresSafeArea())
-        .safeAreaInset(edge: .bottom) { if !draft.readOnly { bottomBar } }
+        .safeAreaInset(edge: .bottom) { if !draft.readOnly && outcome != .running { bottomBar } }
         .task(id: [playing, showVideo]) { await autoplay() }
         .onChange(of: showVideo) { playing = false }
         .onChange(of: videoTime) { _, t in  // the step follows the video
@@ -120,10 +167,12 @@ struct ReviewView: View {
     @ViewBuilder private var subtitle: some View {
         switch draft.source {
         case .recording: Label("Demonstration · check the yellow steps", systemImage: "record.circle").foregroundStyle(.secondary)
-        case .intent: Label("Intent", systemImage: draft.icon).foregroundStyle(.secondary)
+        case .intent:
+            if let o = outcome { OutcomeLabel(outcome: o) }
+            else { Label("Intent", systemImage: draft.icon).foregroundStyle(.secondary) }
         case .run:
             if draft.readOnly { Label("Imported", systemImage: "square.and.arrow.down").foregroundStyle(.secondary) }
-            else if let o = draft.outcome { OutcomeLabel(outcome: o) }
+            else if let o = outcome { OutcomeLabel(outcome: o) }
         }
     }
 
@@ -298,15 +347,54 @@ struct ReviewView: View {
 
     private var bottomBar: some View {
         BottomBar {
-            HStack(spacing: Space.m) {
-                Button { optimizing = true } label: { Label("Optimize with AI", systemImage: "sparkles") }
-                    .buttonStyle(BigButton(tint: Color(uiColor: .systemIndigo)))
-                Button { saving = true } label: {
-                    Label(draft.intentID == nil ? "Save as Intent" : "Save Intent", systemImage: "bookmark.fill")
+            VStack(spacing: Space.s) {
+                if draft.runID != nil, outcome == .failed || outcome == .stopped {
+                    Button("Retry", systemImage: "arrow.clockwise", action: retryRun)
+                        .buttonStyle(BigButton())
+                        .disabled(retrying || app.startingAgent || app.agent.running || app.recorder.recording)
+                    if retrying { ProgressView("Reconnecting…") }
                 }
-                .buttonStyle(BigButton())
+                HStack(spacing: Space.m) {
+                    Button { optimizing = true } label: { Label("Optimize with AI", systemImage: "sparkles") }
+                        .buttonStyle(BigButton(tint: Color(uiColor: .systemIndigo)))
+                    Button { saving = true } label: {
+                        Label(draft.intentID == nil ? "Save as Intent" : "Save Intent", systemImage: "bookmark.fill")
+                    }
+                    .buttonStyle(BigButton())
+                }
             }
         }
+    }
+
+    private func retryRun() {
+        guard !retrying, !app.startingAgent, !app.agent.running, !app.recorder.recording,
+              let id = draft.runID, let run = app.runs.run(id) else { return }
+        let intent = app.intents.item(draft.intentID)
+        playing = false
+        retrying = true
+        retryError = nil
+        Task {
+            defer { retrying = false }
+            do {
+                try await app.board.refreshStatus()
+                dismiss()
+                await app.run(run.task, intent: intent)
+            } catch {
+                retryError = error.localizedDescription
+            }
+        }
+    }
+
+    private var failureReason: String {
+        steps.last(where: { $0.name == "error" || $0.name == "fail" })?.action["reason"]?.str
+            ?? String(localized: "The run ended before it could finish. Retry to start again.")
+    }
+
+    private var failureMessage: String {
+        if failureReason.contains("board link lost") || failureReason.contains("board disconnected") {
+            return String(localized: "The board connection was lost. Move the board closer and keep it powered on, then tap Retry.")
+        }
+        return failureReason
     }
 
     private func rerun(from step: DraftStep) {

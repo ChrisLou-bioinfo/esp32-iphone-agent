@@ -1,6 +1,66 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+  "The run is still active. Return to the Home Screen to continue.": {
+    "localizations": {
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "任务仍在进行中。请返回手机主屏幕以继续。"
+        }
+      }
+    }
+  },
+  "Paused": {
+    "localizations": {
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "已暂停"
+        }
+      }
+    }
+  },
+  "The board connection was lost. Move the board closer and keep it powered on, then tap Retry.": {
+    "localizations": {
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "与板子的连接已断开。请把板子移近并保持供电，然后点击重试。"
+        }
+      }
+    }
+  },
+  "The run ended before it could finish. Retry to start again.": {
+    "localizations": {
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "任务未完成便已结束。点击重试重新开始。"
+        }
+      }
+    }
+  },
+  "Error details": {
+    "localizations": {
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "错误详情"
+        }
+      }
+    }
+  },
+  "Could not finish": {
+    "localizations": {
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "未能完成"
+        }
+      }
+    }
+  },
     "" : {
       "shouldTranslate" : false
     },
@@ -1823,7 +1883,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "归位"
+            "value" : "主页"
           }
         }
       }
@@ -5027,6 +5087,506 @@
     },
     "••••••••" : {
       "shouldTranslate" : false
+    },
+    "Choose a model" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择模型"
+          }
+        }
+      }
+    },
+    "Automatic · Free models" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动 · 免费模型"
+          }
+        }
+      }
+    },
+    "Automatic · OpenRouter" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动 · OpenRouter"
+          }
+        }
+      }
+    },
+    "Automatic routing" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动路由"
+          }
+        }
+      }
+    },
+    "OpenRouter chooses a model for each request. Free model availability and responses can vary." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OpenRouter 会为每次请求选择模型。免费模型的可用性和回复可能有所不同。"
+          }
+        }
+      }
+    },
+    "Models" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型"
+          }
+        }
+      }
+    },
+    "Loading models…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在加载模型…"
+          }
+        }
+      }
+    },
+    "No models loaded" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未加载模型"
+          }
+        }
+      }
+    },
+    "Refresh the list or enter a model ID below." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刷新列表，或在下方输入模型 ID。"
+          }
+        }
+      }
+    },
+    "Custom model" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义模型"
+          }
+        }
+      }
+    },
+    "Use Model ID" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用此模型 ID"
+          }
+        }
+      }
+    },
+    "Search models" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索模型"
+          }
+        }
+      }
+    },
+    "Selected" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选择"
+          }
+        }
+      }
+    },
+    "Connected, but the model returned no answer. Try again or choose another vision model." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连接成功，但模型未返回答案。请重试或选择其他视觉模型。"
+          }
+        }
+      }
+    },
+    "Connected, but the image check was inconclusive. Try again or choose a specific vision model." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "连接成功，但图片测试未通过。请重试或选择一个具体的视觉模型。"
+          }
+        }
+      }
+    },
+    "Model reply:" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型回复："
+          }
+        }
+      }
+    },
+    "Waiting for the model…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在等待模型…"
+          }
+        }
+      }
+    },
+    "Total request time" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请求总耗时"
+          }
+        }
+      }
+    },
+    "Server response" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务端响应"
+          }
+        }
+      }
+    },
+    "First answer token" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "首个答案 token"
+          }
+        }
+      }
+    },
+    "Includes network and model processing time." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "包含网络传输和模型处理时间。"
+          }
+        }
+      }
+    },
+    "The model request timed out before it finished. Try again or choose a specific vision model instead of automatic routing." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型请求尚未完成便已超时。请重试，或选择具体的视觉模型而非自动路由。"
+          }
+        }
+      }
+    },
+    "Retrying…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在重试…"
+          }
+        }
+      }
+    },
+    "The model timed out. Trying once more…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型超时了，正在再试一次…"
+          }
+        }
+      }
+    },
+    "Swiping right" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向右滑动"
+          }
+        }
+      }
+    },
+    "Swiping left" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向左滑动"
+          }
+        }
+      }
+    },
+    "Swiping down" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向下滑动"
+          }
+        }
+      }
+    },
+    "Swiping up" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "向上滑动"
+          }
+        }
+      }
+    },
+    "Think" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "思考"
+          }
+        }
+      }
+    },
+    "Act" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "操作"
+          }
+        }
+      }
+    },
+    "End" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "结束"
+          }
+        }
+      }
+    },
+    "Waiting time" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等待时长"
+          }
+        }
+      }
+    },
+    "Look" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查看"
+          }
+        }
+      }
+    },
+    "Thinking about my next move…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在思考下一步…"
+          }
+        }
+      }
+    },
+    "Waiting for the model to respond…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在等待模型回复…"
+          }
+        }
+      }
+    },
+    "Planning…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在规划…"
+          }
+        }
+      }
+    },
+    "Thinking through my plan…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在构思我的计划…"
+          }
+        }
+      }
+    },
+    "Plan" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规划"
+          }
+        }
+      }
+    },
+    "You" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "等你"
+          }
+        }
+      }
+    },
+    "Tap" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点击"
+          }
+        }
+      }
+    },
+    "Type" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输入"
+          }
+        }
+      }
+    },
+    "Key" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按键"
+          }
+        }
+      }
+    },
+    "Draw" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "绘制"
+          }
+        }
+      }
+    },
+    "Waiting for the screen…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在等待屏幕变化…"
+          }
+        }
+      }
+    },
+    "Refreshing status…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在刷新状态…"
+          }
+        }
+      }
+    },
+    "Refresh status" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刷新状态"
+          }
+        }
+      }
+    },
+    "Turn on Bluetooth to refresh the board status." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请开启蓝牙后刷新设备状态。"
+          }
+        }
+      }
+    },
+    "Tap Board to choose a device." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点按 Board 选择设备。"
+          }
+        }
+      }
+    },
+    "Still reconnecting. Keep the board nearby." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仍在重新连接，请将设备放近一些。"
+          }
+        }
+      }
+    },
+    "No fresh board status received. Try again." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未收到最新设备状态，请重试。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

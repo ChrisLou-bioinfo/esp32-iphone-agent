@@ -10,26 +10,11 @@ struct ModelSettingsView: View {
     var body: some View {
         Form {
             Section {
-                TextField("Base URL", text: $settings.baseURL, prompt: Text(verbatim: "https://example.com/v1"))
-                    .keyboardType(.URL)
-                SecureField("API key", text: $settings.apiKey, prompt: Text("API key (optional)"))
-                ModelPicker(settings: settings, title: "Model", selection: $settings.model, automatic: ModelPicker.automatic(settings))
-                Button { Task { await settings.loadModels() } } label: {
-                    HStack {
-                        Text("Refresh Model List")
-                        Spacer()
-                        if settings.loadingModels { ProgressView() }
-                    }
-                }
-                .disabled(settings.loadingModels || !settings.isConfigured)
+                ProviderFields(settings: settings)
             } header: {
-                Text("OpenAI-compatible API")
+                Text("Model Provider")
             } footer: {
-                if let error = settings.modelsError {
-                    Text("Could not load the model list: \(error) Type a model id instead.")
-                } else {
-                    Text("Your key stays in this iPhone's Keychain and is only sent to this endpoint.")
-                }
+                if let url = settings.provider.keyURL { Link("Get an API key", destination: url) }
             }
             Section {
                 Button {
@@ -46,6 +31,10 @@ struct ModelSettingsView: View {
                     }
                 }
                 .disabled(testing || !app.modelReady)
+                ModelTestTimingView(app: app)
+                if let error = app.modelError {
+                    Text(verbatim: error).font(.footnote).foregroundStyle(Palette.stop)
+                }
             }
             Section {
                 DisclosureGroup("Advanced", isExpanded: $advanced) {
@@ -64,68 +53,6 @@ struct ModelSettingsView: View {
         .autocorrectionDisabled()
         .navigationTitle("Model")
         .navigationBarTitleDisplayMode(.inline)
-        .task(id: settings.baseURL + "\n" + settings.apiKey) {
-            guard (try? await Task.sleep(nanoseconds: 600_000_000)) != nil else { return }  // typing: wait for a pause
-            await settings.loadModels()
-        }
-    }
-}
 
-/// A model id: a menu of the endpoint's models when the list loaded, else a text field to type one.
-/// "" is the automatic choice (`automatic` labels it).
-struct ModelPicker: View {
-    @ObservedObject var settings: Settings
-    let title: LocalizedStringKey
-    @Binding var selection: String
-    let automatic: String
-
-    static func automatic(_ settings: Settings) -> String {
-        settings.models.first.map { String(localized: "Automatic (first: \($0))") } ?? String(localized: "Automatic")
-    }
-
-    var body: some View {
-        if settings.models.isEmpty {
-            LabeledContent {
-                if settings.loadingModels && selection.isEmpty {
-                    ProgressView()
-                } else {
-                    TextField(title, text: $selection, prompt: Text(verbatim: automatic))
-                        .multilineTextAlignment(.trailing)
-                }
-            } label: { Text(title) }
-        } else {
-            Picker(title, selection: $selection) {
-                Text(verbatim: automatic).tag("")
-                if !selection.isEmpty && !settings.models.contains(selection) { Text(verbatim: selection).tag(selection) }
-                ForEach(settings.models, id: \.self) { Text(verbatim: $0).tag($0) }
-            }
-            .pickerStyle(.menu)
-        }
-    }
-}
-
-/// Onboarding, after Test Connection: the model in use and a menu to change it.
-struct PickedModelRow: View {
-    @ObservedObject var settings: Settings
-
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Model").font(.subheadline).foregroundStyle(.secondary)
-                Text(verbatim: settings.currentModel ?? ModelPicker.automatic(settings)).font(.body.monospaced()).lineLimit(1)
-            }
-            Spacer()
-            if settings.loadingModels {
-                ProgressView()
-            } else if !settings.models.isEmpty {
-                Menu("Change") {
-                    Picker("Model", selection: $settings.model) {
-                        Text(verbatim: ModelPicker.automatic(settings)).tag("")
-                        ForEach(settings.models, id: \.self) { Text(verbatim: $0).tag($0) }
-                    }
-                }
-            }
-        }
-        .task { if settings.models.isEmpty { await settings.loadModels() } }
     }
 }

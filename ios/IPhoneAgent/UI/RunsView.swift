@@ -45,7 +45,7 @@ struct RunsView: View {
     }
 
     private func isRunning(_ run: Run) -> Bool {
-        agent.running && run.id == app.traces.dir?.lastPathComponent
+        app.outcome(for: run) == .running
     }
 }
 

@@ -4,9 +4,8 @@ import Foundation
 /// Starts, updates and ends the Live Activity of a run or a recording. While the agent works the app is in
 /// the background, so this is the user's view of the run; the app updates it whenever BLE wakes it.
 ///
-/// The island's eyes: Live Activity views cannot run their own animations, but a change between two updates
-/// animates (the widget springs `look`). So while the agent waits for a frame or the model, a loop here sends a
-/// new random gaze every 1.4-2.2 s (the eyes dart), and before a gesture the gaze points at its target.
+/// Larger presentations animate gaze changes when actions update `look`. The former random idle gaze
+/// loop is preserved but disabled to keep the primary text-only minimal presentation stable.
 /// Updates go through a token bucket (burst 2, then 1 per second), so the system never sees more than ~1/s.
 @MainActor final class LiveActivityController {
     typealias State = AgentActivityAttributes.ContentState
@@ -75,6 +74,7 @@ import Foundation
             if state.phase != .recording { apply(.ended(outcome.mood), to: &state) }
         }
         state.finished = true
+        state.waitingSince = nil
         DebugLog.write("Live Activity: ended" + (outcome.map { " (\($0.mood.rawValue))" } ?? ""))
         self.activity = nil
         last = nil
@@ -88,6 +88,10 @@ import Foundation
     // MARK: - status and eyes
 
     private func apply(_ status: IslandStatus, to state: inout State) {
+        if status.waits {
+            if state.label != status.short || state.waitingSince == nil { state.waitingSince = Date() }
+        } else { state.waitingSince = nil }
+        state.minimalLabel = status.minimal ?? status.short
         state.label = status.short
         state.labelFull = status.full
         if let look = status.look {
@@ -99,6 +103,11 @@ import Foundation
 
     /// While waiting: glance somewhere else every 1.4-2.2 s, mostly sideways, never twice at the same spot.
     private func startDarting() {
+        // Preserve the gaze implementation, but do not send cosmetic updates while the primary
+        // minimal presentation is text-only. ActivityKit does not tell this controller which
+        // presentation is visible; repeated updates can animate the entire island. Action-driven
+        // gaze and mood updates remain enabled in the larger presentations.
+        guard Self.idleGazeEnabled else { return }
         guard darting == nil else { return }
         darting = Task { [weak self] in
             while !Task.isCancelled {
@@ -138,6 +147,7 @@ import Foundation
     }
 
     private static let perSecond = 1.0, burst = 2.0
+    private static let idleGazeEnabled = false
 
     private func refill() {
         let t = now()

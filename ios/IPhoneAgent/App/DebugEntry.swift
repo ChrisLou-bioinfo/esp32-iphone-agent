@@ -82,6 +82,11 @@ extension AppModel {
             guard let i = args.firstIndex(of: flag), i + 1 < args.count else { return nil }
             return args[i + 1]
         }
+        #if DEBUG
+        if let requested = value(after: "-setup"),
+           let page = ["connect": SetupPage.connect, "brain": .brain][requested] { setupPage = page }
+        if args.contains("-test-model") { Task { await pingLLM() } }
+        #endif
         if let task = value(after: "-run") { debugCommand("run", task: task) }
         if args.contains("-calibrate") { debugCommand("calibrate") }
         if args.contains("-bench") { debugCommand("bench", kb: Int(value(after: "-bench") ?? "") ?? 256) }

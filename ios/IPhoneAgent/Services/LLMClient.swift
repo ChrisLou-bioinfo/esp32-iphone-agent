@@ -8,6 +8,7 @@ struct ChatResult {
     var usage: [String: Int] = [:]  // prompt_tokens, completion_tokens, … when the server sends them
     var reasoningChars = 0          // reasoning_content the model wrote (not part of `text`)
     var rawChars = 0                // content before trimming
+    var responseSeconds: Double?  // time to HTTP headers, including server queue time
     var retried = false             // the first reply was empty
 
     /// For the trace and the debug log: why a reply came back empty or cut.
@@ -37,7 +38,8 @@ struct LLMError: LocalizedError {
 /// Client for any OpenAI-compatible chat endpoint (vision models). Port of llm.py, with streaming:
 /// Cloudflare cuts requests that send nothing for ~100 s, so replies are streamed (SSE). A server that
 /// ignores `stream` and answers with plain JSON works too.
-@MainActor final class LLMClient: ChatModel {
+@MainActor final class LLMClient: ChatModel, ModelProgressReporting {
+    var onProgress: ((ModelResponseProgress) -> Void)?
     static let tokenParams = ["max_tokens", "max_completion_tokens"]
 
     let model: String
@@ -87,6 +89,7 @@ struct LLMError: LocalizedError {
 
     private func once(system: String, text: String, images: [Data], maxTokens: Int,
                       temperature: Double) async throws -> ChatResult {
+        onProgress?(.waiting)
         var content: [[String: Any]] = images.map {
             ["type": "image_url", "image_url": ["url": "data:image/jpeg;base64," + $0.base64EncodedString()]]
         }
@@ -158,6 +161,7 @@ struct LLMError: LocalizedError {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (bytes, response) = try await session.bytes(for: request)
+        let responseSeconds = now() - started
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         let type = (response as? HTTPURLResponse)?.value(forHTTPHeaderField: "Content-Type") ?? ""
         DebugLog.write(String(format: "llm   headers: HTTP %d %@ after %.1f s", status, type, now() - started))
@@ -169,18 +173,29 @@ struct LLMError: LocalizedError {
         if !type.contains("text/event-stream") {  // a plain JSON answer
             var raw = Data()
             for try await b in bytes { raw.append(b) }
-            return (status, try Self.message(raw), "")
+            var result = try Self.message(raw)
+            result.responseSeconds = responseSeconds
+            if !result.text.isEmpty || result.reasoningChars > 0 { onProgress?(.receiving) }
+            return (status, result, "")
         }
         var result = ChatResult(text: "", firstToken: nil, total: 0)
+        result.responseSeconds = responseSeconds
+        var reportedReceiving = false
         for try await line in bytes.lines {
             guard line.hasPrefix("data:") else { continue }
             let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
             if payload == "[DONE]" { break }
             guard let json = (try? JSONSerialization.jsonObject(with: Data(payload.utf8))) as? [String: Any] else { continue }
+            try Self.checkError(json)
             let choice = (json["choices"] as? [[String: Any]])?.first
             let delta = choice?["delta"] as? [String: Any]
             Self.note(json, choice, into: &result)
-            result.reasoningChars += Self.reasoning(delta).count
+            let reasoning = Self.reasoning(delta)
+            if !reportedReceiving, !reasoning.isEmpty || !(delta?["content"] as? String ?? "").isEmpty {
+                reportedReceiving = true
+                onProgress?(.receiving)
+            }
+            result.reasoningChars += reasoning.count
             guard let piece = delta?["content"] as? String, !piece.isEmpty else { continue }
             if result.firstToken == nil { result.firstToken = now() - started }
             result.text += piece
@@ -192,6 +207,7 @@ struct LLMError: LocalizedError {
     /// choices[0].message of a non-streamed reply.
     static func message(_ raw: Data) throws -> ChatResult {
         let json = try JSONSerialization.jsonObject(with: raw) as? [String: Any]
+        if let json { try Self.checkError(json) }
         let choice = (json?["choices"] as? [[String: Any]])?.first
         guard let json, let msg = choice?["message"] as? [String: Any] else {
             throw LLMError(message: "bad LLM reply: \(String(decoding: raw.prefix(200), as: UTF8.self))")
@@ -201,6 +217,13 @@ struct LLMError: LocalizedError {
         result.reasoningChars = reasoning(msg).count
         result.rawChars = result.text.count
         return result
+    }
+
+    /// Providers can report errors inside an HTTP 200 stream or JSON response.
+    private static func checkError(_ json: [String: Any]) throws {
+        guard let error = json["error"] else { return }
+        let message = (error as? [String: Any])?["message"] as? String ?? (error as? String) ?? "Provider error"
+        throw LLMError(message: String(message.prefix(300)))
     }
 
     /// finish_reason and usage, from whichever event carries them.

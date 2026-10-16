@@ -66,13 +66,15 @@ struct AgentLiveActivity: Widget {
                 if s.phase == .recording {
                     Image(systemName: "record.circle.fill").foregroundStyle(.red)
                 } else {
-                    VStack(spacing: 0) {
-                        Eyes(state: s).frame(width: 16, height: 16)
-                        Text(verbatim: s.minimalLabel ?? s.label)
-                            .font(.caption2).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.8)
-                    }
-                    .frame(width: 36)
-                    .accessibilityLabel(Text(verbatim: s.labelFull))
+                    // Minimal presentation is the primary surface while Screen Mirroring is active.
+                    // Keep it text-only: the former face-over-label layout was too small to read,
+                    // and idle gaze updates caused distracting system refresh transitions.
+                    // Eyes remains below for compact/expanded presentations and future reuse.
+                    Text(verbatim: s.minimalLabel ?? s.label)
+                        .font(.caption2.bold()).foregroundStyle(.white)
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                        .frame(width: 36, height: 24)
+                        .accessibilityLabel(Text(verbatim: s.labelFull))
                 }
             }
             .widgetURL(AgentActivityAttributes.url(run: context.attributes.runID))
@@ -120,8 +122,8 @@ private struct Buttons: View {
 }
 
 /// The character's face without the USB tab. Widgets do not animate on their own, but a change of `look`
-/// between two updates springs: the app sends a new gaze every ~2 s while it waits (darting eyes) and the
-/// gesture's target before the pointer moves.
+/// between action updates springs toward the gesture's target before the pointer moves.
+/// Random idle gaze updates are disabled for the text-only minimal presentation.
 private struct Eyes: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let state: AgentActivityAttributes.ContentState

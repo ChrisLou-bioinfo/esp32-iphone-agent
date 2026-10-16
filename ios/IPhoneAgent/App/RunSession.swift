@@ -12,7 +12,9 @@ extension AppModel {
 
     /// Start a task (or a saved intent: its checklist goes to the actor as hints).
     func run(_ task: String, intent: SavedTask? = nil) async {
-        guard !agent.running, !recorder.recording else { return }
+        guard !startingAgent, !agent.running, !recorder.recording else { return }
+        startingAgent = true
+        defer { startingAgent = false }
         currentIntent = intent
         lastTask = task
         agent.hints = intent?.checklist ?? []
@@ -47,6 +49,8 @@ extension AppModel {
         startVideo()
         FrameMode.fallback = nil  // each run starts in the chosen mode
         let snapMode = FrameMode.current == .snap
+        live.start(task: task, runID: runID, limit: agent.maxSteps)
+        mark("Live Activity requested")
         do {
             if snapMode {
                 if feed.streamOn { try await feed.stream(false) }
@@ -59,8 +63,6 @@ extension AppModel {
                 self?.say("iOS is ending background time; BLE status keeps the run going")
                 self?.endBackgroundTask()
             }
-            live.start(task: task, runID: runID, limit: agent.maxSteps)
-            mark("Live Activity started")
             let left = now()
             var away = await leaveApp()
             if !away { away = await askUserToLeave() }
@@ -88,6 +90,10 @@ extension AppModel {
             live.end((.failure, String(localized: "Could not start")))
             endBackgroundTask()
             runs.reload()
+            runMood = .failure
+            notifier.post(.failed, title: String(localized: "Could not start"),
+                          body: error.localizedDescription, run: runID)
+            openReview(run: runID)
         }
     }
 

@@ -270,7 +270,7 @@ struct HomeView: View {
                 Button { start(task) } label: { Label("Start", systemImage: "play.fill") }
                     .buttonStyle(BigButton())
                     .disabled(task.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || blocker != nil
-                              || app.departing || recorder.recording)
+                              || app.departing || app.startingAgent || recorder.recording)
                 if let blocker {
                     Button { app.setupPage = blocker.page } label: {
                         Label(blocker.text, systemImage: "exclamationmark.circle").font(.footnote)

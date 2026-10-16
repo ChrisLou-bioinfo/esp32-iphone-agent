@@ -49,6 +49,7 @@ import UIKit
     var recoverySince = Date()
     @Published var takingOver = false
     @Published var departing = false  // the character's take-off before a run
+    @Published var startingAgent = false
     /// A banner on Home: the app could not leave by itself (swipe up), or the run waits while the app is in front.
     @Published var homeHint: String?
     var resumeAsked = 0.0  // when Continue was tapped in the app

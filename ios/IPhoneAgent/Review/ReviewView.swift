@@ -20,6 +20,8 @@ struct ReviewView: View {
     @State private var saving = false
     @State private var optimizing = false
     @State private var shareURL: URL?
+    @State private var retrying = false
+    @State private var retryError: String?
 
     private var steps: [DraftStep] { draft.steps }
     private var step: DraftStep? { steps.indices.contains(index) ? steps[index] : nil }
@@ -28,6 +30,23 @@ struct ReviewView: View {
     var body: some View {
         VStack(spacing: 0) {
             topBar
+            if draft.outcome == .failed {
+                VStack(alignment: .leading, spacing: Space.s) {
+                    Label("Could not finish", systemImage: "exclamationmark.triangle")
+                        .font(.headline)
+                    Text(verbatim: failureMessage).font(.subheadline)
+                    if failureMessage != failureReason {
+                        DisclosureGroup("Error details") {
+                            Text(verbatim: failureReason).font(.caption).textSelection(.enabled)
+                        }
+                    }
+                    if let retryError {
+                        Text(verbatim: retryError).font(.subheadline).foregroundStyle(Palette.stop)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, Space.xl).padding(.vertical, Space.s)
+            }
             if steps.isEmpty {
                 IntentWordsView(draft: draft)
             } else {
@@ -298,15 +317,54 @@ struct ReviewView: View {
 
     private var bottomBar: some View {
         BottomBar {
-            HStack(spacing: Space.m) {
-                Button { optimizing = true } label: { Label("Optimize with AI", systemImage: "sparkles") }
-                    .buttonStyle(BigButton(tint: Color(uiColor: .systemIndigo)))
-                Button { saving = true } label: {
-                    Label(draft.intentID == nil ? "Save as Intent" : "Save Intent", systemImage: "bookmark.fill")
+            VStack(spacing: Space.s) {
+                if draft.runID != nil, draft.outcome == .failed {
+                    Button("Retry", systemImage: "arrow.clockwise", action: retryRun)
+                        .buttonStyle(BigButton())
+                        .disabled(retrying || app.startingAgent || app.agent.running || app.recorder.recording)
+                    if retrying { ProgressView("Reconnecting…") }
                 }
-                .buttonStyle(BigButton())
+                HStack(spacing: Space.m) {
+                    Button { optimizing = true } label: { Label("Optimize with AI", systemImage: "sparkles") }
+                        .buttonStyle(BigButton(tint: Color(uiColor: .systemIndigo)))
+                    Button { saving = true } label: {
+                        Label(draft.intentID == nil ? "Save as Intent" : "Save Intent", systemImage: "bookmark.fill")
+                    }
+                    .buttonStyle(BigButton())
+                }
             }
         }
+    }
+
+    private func retryRun() {
+        guard !retrying, !app.startingAgent, !app.agent.running, !app.recorder.recording,
+              let id = draft.runID, let run = app.runs.run(id) else { return }
+        let intent = app.intents.item(draft.intentID)
+        playing = false
+        retrying = true
+        retryError = nil
+        Task {
+            defer { retrying = false }
+            do {
+                try await app.board.refreshStatus()
+                dismiss()
+                await app.run(run.task, intent: intent)
+            } catch {
+                retryError = error.localizedDescription
+            }
+        }
+    }
+
+    private var failureReason: String {
+        steps.last(where: { $0.name == "error" || $0.name == "fail" })?.action["reason"]?.str
+            ?? String(localized: "The run ended before it could finish. Retry to start again.")
+    }
+
+    private var failureMessage: String {
+        if failureReason.contains("board link lost") || failureReason.contains("board disconnected") {
+            return String(localized: "The board connection was lost. Move the board closer and keep it powered on, then tap Retry.")
+        }
+        return failureReason
     }
 
     private func rerun(from step: DraftStep) {

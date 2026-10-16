@@ -1,6 +1,46 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+  "The board connection was lost. Move the board closer and keep it powered on, then tap Retry.": {
+    "localizations": {
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "与板子的连接已断开。请把板子移近并保持供电，然后点击重试。"
+        }
+      }
+    }
+  },
+  "The run ended before it could finish. Retry to start again.": {
+    "localizations": {
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "任务未完成便已结束。点击重试重新开始。"
+        }
+      }
+    }
+  },
+  "Error details": {
+    "localizations": {
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "错误详情"
+        }
+      }
+    }
+  },
+  "Could not finish": {
+    "localizations": {
+      "zh-Hans": {
+        "stringUnit": {
+          "state": "translated",
+          "value": "未能完成"
+        }
+      }
+    }
+  },
     "" : {
       "shouldTranslate" : false
     },

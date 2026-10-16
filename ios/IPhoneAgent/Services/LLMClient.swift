@@ -177,6 +177,7 @@ struct LLMError: LocalizedError {
             let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
             if payload == "[DONE]" { break }
             guard let json = (try? JSONSerialization.jsonObject(with: Data(payload.utf8))) as? [String: Any] else { continue }
+            try Self.checkError(json)
             let choice = (json["choices"] as? [[String: Any]])?.first
             let delta = choice?["delta"] as? [String: Any]
             Self.note(json, choice, into: &result)
@@ -192,6 +193,7 @@ struct LLMError: LocalizedError {
     /// choices[0].message of a non-streamed reply.
     static func message(_ raw: Data) throws -> ChatResult {
         let json = try JSONSerialization.jsonObject(with: raw) as? [String: Any]
+        if let json { try Self.checkError(json) }
         let choice = (json?["choices"] as? [[String: Any]])?.first
         guard let json, let msg = choice?["message"] as? [String: Any] else {
             throw LLMError(message: "bad LLM reply: \(String(decoding: raw.prefix(200), as: UTF8.self))")
@@ -201,6 +203,13 @@ struct LLMError: LocalizedError {
         result.reasoningChars = reasoning(msg).count
         result.rawChars = result.text.count
         return result
+    }
+
+    /// Providers can report errors inside an HTTP 200 stream or JSON response.
+    private static func checkError(_ json: [String: Any]) throws {
+        guard let error = json["error"] else { return }
+        let message = (error as? [String: Any])?["message"] as? String ?? (error as? String) ?? "Provider error"
+        throw LLMError(message: String(message.prefix(300)))
     }
 
     /// finish_reason and usage, from whichever event carries them.

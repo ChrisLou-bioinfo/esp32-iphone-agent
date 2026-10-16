@@ -2,11 +2,10 @@ import Foundation
 
 /// Presets only configure public endpoints. Users always supply their own credentials.
 enum ModelProvider: String, CaseIterable, Identifiable {
-    case openRouterFree, openAI, gemini, qwen, qwenInternational, deepSeek, openRouter, others
+    case openAI, gemini, qwen, qwenInternational, deepSeek, openRouter, others
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .openRouterFree: return "OpenRouter Free"
         case .openAI: return "OpenAI"
         case .gemini: return "Google Gemini"
         case .qwen: return "Qwen · China"
@@ -18,7 +17,7 @@ enum ModelProvider: String, CaseIterable, Identifiable {
     }
     var baseURL: String {
         switch self {
-        case .openRouterFree, .openRouter: return "https://openrouter.ai/api/v1"
+        case .openRouter: return "https://openrouter.ai/api/v1"
         case .openAI: return "https://api.openai.com/v1"
         case .gemini: return "https://generativelanguage.googleapis.com/v1beta/openai"
         case .qwen: return "https://dashscope.aliyuncs.com/compatible-mode/v1"
@@ -30,7 +29,7 @@ enum ModelProvider: String, CaseIterable, Identifiable {
     var keyURL: URL? {
         let address: String
         switch self {
-        case .openRouterFree, .openRouter: address = "https://openrouter.ai/settings/keys"
+        case .openRouter: address = "https://openrouter.ai/settings/keys"
         case .openAI: address = "https://platform.openai.com/api-keys"
         case .gemini: address = "https://aistudio.google.com/apikey"
         case .qwen: address = "https://bailian.console.aliyun.com/"
@@ -42,7 +41,7 @@ enum ModelProvider: String, CaseIterable, Identifiable {
     }
     static func infer(baseURL: String, model: String) -> Self {
         let base = baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        if base == openRouter.baseURL { return model == "openrouter/free" ? .openRouterFree : .openRouter }
+        if base == openRouter.baseURL { return .openRouter }
         return allCases.first { $0 != .others && $0.baseURL == base } ?? .others
     }
 }

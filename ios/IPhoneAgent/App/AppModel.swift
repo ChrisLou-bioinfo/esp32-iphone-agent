@@ -248,9 +248,7 @@ import UIKit
             let r = try await client.chat(system: "Name the dominant color in the image. Reply with one English word.",
                                           text: "What color is this image?", image: image, maxTokens: 600, temperature: 0)
             guard revision == settings.configurationRevision else { return }
-            guard r.text.lowercased().contains("red") else {
-                throw LLMError(message: "The model did not identify the sample image. Choose a model that supports images.")
-            }
+            try ModelConnectionCheck.validate(r)
             metrics.llmPingMs = (now() - started) * 1000
             metrics.llm(first: r.firstToken, total: r.total)
             modelOK = true

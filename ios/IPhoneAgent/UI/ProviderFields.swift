@@ -29,29 +29,9 @@ struct ProviderFields: View {
             }
             .frame(minHeight: 44).padding(.vertical, Space.xs)
             Divider()
-            LabeledContent("Model") {
-                HStack(spacing: Space.xs) {
-                    TextField("Model ID", text: $settings.model, prompt: Text("Choose or enter"))
-                        .multilineTextAlignment(.trailing).labelsHidden()
-                    if settings.loadingModels {
-                        ProgressView().frame(minWidth: 44, minHeight: 44)
-                    } else {
-                        Menu("Choose Model", systemImage: "chevron.up.chevron.down") {
-                            ForEach(settings.models, id: \.self) { id in
-                                Button { settings.model = id } label: { Text(verbatim: id) }
-                            }
-                            Divider()
-                            Button("Refresh Models", systemImage: "arrow.clockwise") {
-                                Task { await settings.loadModels() }
-                            }
-                            .disabled(!settings.isConfigured)
-                        }
-                        .labelStyle(.iconOnly).tint(.secondary)
-                        .frame(minWidth: 44, minHeight: 44)
-                    }
-                }
-            }
-            .frame(minHeight: 44).padding(.vertical, Space.xs)
+            ModelPicker(settings: settings, title: "Model", selection: $settings.model,
+                        automatic: String(localized: "Choose a model"), allowsDefault: false)
+                .frame(minHeight: 44).padding(.vertical, Space.xs)
             if let error = settings.modelsError {
                 Text(verbatim: error).font(.footnote).foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)

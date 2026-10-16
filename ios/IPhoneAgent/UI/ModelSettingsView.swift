@@ -55,29 +55,3 @@ struct ModelSettingsView: View {
 
     }
 }
-
-/// A model ID is always editable, even when the endpoint supplies a model list.
-struct ModelPicker: View {
-    @ObservedObject var settings: Settings
-    let title: LocalizedStringKey
-    @Binding var selection: String
-    let automatic: String
-
-    var body: some View {
-        HStack {
-            TextField(title, text: $selection, prompt: Text(verbatim: automatic))
-                .textInputAutocapitalization(.never).autocorrectionDisabled()
-                .accessibilityLabel(title)
-            if settings.loadingModels { ProgressView() }
-            if !settings.models.isEmpty {
-                Menu {
-                    if title != "Model ID" { Button("Use Default") { selection = "" } }
-                    ForEach(settings.models, id: \.self) { id in
-                        Button { selection = id } label: { Text(verbatim: id) }
-                    }
-                } label: { Image(systemName: "list.bullet") }
-                .accessibilityLabel("Choose Model")
-            }
-        }
-    }
-}

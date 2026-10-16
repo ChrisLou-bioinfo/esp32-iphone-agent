@@ -114,7 +114,7 @@ import UIKit
         let changedEndpoint = baseURL != choice.baseURL
         baseURL = choice.baseURL
         if changedEndpoint { apiKey = Keychain.get("llm-endpoint-" + baseURL) ?? "" }
-        model = choice == .openRouterFree ? "openrouter/free" : ""
+        model = ""
         plannerModel = ""
         actorModel = ""
         tokenParam = "auto"

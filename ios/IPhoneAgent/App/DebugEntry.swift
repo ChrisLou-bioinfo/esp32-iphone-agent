@@ -85,6 +85,7 @@ extension AppModel {
         #if DEBUG
         if let requested = value(after: "-setup"),
            let page = ["connect": SetupPage.connect, "brain": .brain][requested] { setupPage = page }
+        if args.contains("-test-model") { Task { await pingLLM() } }
         #endif
         if let task = value(after: "-run") { debugCommand("run", task: task) }
         if args.contains("-calibrate") { debugCommand("calibrate") }

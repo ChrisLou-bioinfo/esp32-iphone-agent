@@ -37,7 +37,7 @@ final class StubProtocol: URLProtocol {
 /// Port of server/tests/test_llm.py, plus streaming.
 @MainActor final class LLMTests: XCTestCase {
     func testProviderInferenceAndCustomEndpoints() {
-        XCTAssertEqual(ModelProvider.infer(baseURL: "https://openrouter.ai/api/v1/", model: "openrouter/free"), .openRouterFree)
+        XCTAssertEqual(ModelProvider.infer(baseURL: "https://openrouter.ai/api/v1/", model: "openrouter/free"), .openRouter)
         XCTAssertEqual(ModelProvider.infer(baseURL: "https://api.openai.com/v1", model: "custom"), .openAI)
         XCTAssertEqual(ModelProvider.infer(baseURL: "http://192.168.1.4:8080/v1", model: "local"), .others)
         XCTAssertNotEqual(ModelProvider.qwen.baseURL, ModelProvider.qwenInternational.baseURL)
@@ -48,7 +48,8 @@ final class StubProtocol: URLProtocol {
         let defaults = UserDefaults(suiteName: name)!
         defer { defaults.removePersistentDomain(forName: name) }
         let settings = Settings(defaults: defaults, info: [:])
-        settings.selectProvider(.openRouterFree)
+        settings.selectProvider(.openRouter)
+        settings.model = "openrouter/free"
         XCTAssertEqual(settings.baseURL, "https://openrouter.ai/api/v1")
         let model = try await settings.resolvedModel()
         XCTAssertEqual(model, "openrouter/free")
@@ -68,6 +69,39 @@ final class StubProtocol: URLProtocol {
         XCTAssertEqual(settings.provider, .others)
         settings.baseURL = "httpjunk://endpoint"
         XCTAssertFalse(settings.isConfigured)
+    }
+
+    func testImageCheckDoesNotTreatSubstringsOrNegationAsSuccess() throws {
+        XCTAssertNoThrow(try ModelConnectionCheck.validate(ChatResult(text: "Red.", total: 0)))
+        for text in ["infrared", "not red", "", "I cannot identify the image"] {
+            XCTAssertThrowsError(try ModelConnectionCheck.validate(ChatResult(text: text, total: 0)))
+        }
+    }
+
+    func testLegacyFreeProviderPreservesModelAndMigratesProvider() {
+        let name = "migration-" + UUID().uuidString
+        let defaults = UserDefaults(suiteName: name)!
+        defer { defaults.removePersistentDomain(forName: name) }
+        defaults.set("openRouterFree", forKey: "modelProvider")
+        defaults.set(ModelProvider.openRouter.baseURL, forKey: "baseURL")
+        defaults.set("openrouter/free", forKey: "model")
+        let settings = Settings(defaults: defaults, info: [:])
+        XCTAssertEqual(settings.provider, .openRouter)
+        XCTAssertEqual(settings.currentModel, "openrouter/free")
+    }
+
+    func testStreamErrorIsNotMistakenForEmptyReply() async {
+        StubProtocol.seen = []
+        StubProtocol.respond = { _ in
+            (200, "text/event-stream", "data: {\"error\": {\"message\": \"No available provider\"}}\n\ndata: [DONE]\n\n")
+        }
+        do {
+            _ = try await client("router").chat(system: "test", text: "test")
+            XCTFail("Expected provider error")
+        } catch {
+            XCTAssertEqual(error.localizedDescription, "No available provider")
+            XCTAssertEqual(StubProtocol.seen.count, 1)
+        }
     }
 
     func client(_ model: String, extra: [String: Any] = [:], tokenParam: String = "auto") -> LLMClient {
